@@ -1,7 +1,7 @@
 // ============================================================
 // API CONFIG
 // ============================================================
-const API_BASE = 'http://edu-bg-production.up.railway.app';
+const API_BASE = 'https://edu-bg-production.up.railway.app';
 
 // ============================================================
 // TOKEN MANAGEMENT
