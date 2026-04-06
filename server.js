@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_URL = process.env.API_URL || 'http://localhost:8080';
+const API_URL = process.env.API_URL || 'http://edu-bg-production.up.railway.app';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
