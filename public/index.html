@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduPlatform — Online Ta'lim</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      position: relative; overflow: hidden;
+      padding: calc(var(--nav-h) + 60px) 0 80px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+    .hero-glow-1 {
+      position: absolute; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%);
+      top: -100px; left: -100px;
+      animation: float 8s ease-in-out infinite;
+    }
+    .hero-glow-2 {
+      position: absolute; width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
+      bottom: 0; right: 100px;
+      animation: float 10s ease-in-out infinite reverse;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+    }
+    @keyframes float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(30px, -30px) scale(1.05); }
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 99px;
+      background: var(--accent-dim);
+      border: 1px solid var(--border-bright);
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--accent-bright); margin-bottom: 24px;
+    }
+    .hero-badge::before {
+      content:''; width:6px; height:6px; border-radius:50%;
+      background: var(--accent-bright);
+      box-shadow: 0 0 8px var(--accent-bright);
+      animation: pulse 2s infinite;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800; letter-spacing: -2px;
+      line-height: 1.05; margin-bottom: 24px;
+    }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent-bright) 0%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p { font-size: 1.15rem; max-width: 540px; margin-bottom: 36px; }
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    .hero-stats {
+      display: flex; gap: 40px; margin-top: 64px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--text-1), var(--text-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 0.82rem; color: var(--text-3); }
+
+    /* HOW IT WORKS */
+    .section { padding: 100px 0; }
+    .steps {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 24px; margin-top: 60px; position: relative;
+    }
+    .steps::before {
+      content: '';
+      position: absolute; top: 36px; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    }
+    .step {
+      text-align: center; padding: 32px 20px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all .3s;
+    }
+    .step:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-accent);
+    }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--teal));
+      font-family: var(--font-display); font-size: 1.2rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .step h3 { margin-bottom: 8px; font-size: 1rem; }
+
+    /* FEATURES */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 20px; margin-top: 60px;
+    }
+    .feature-card {
+      padding: 32px; background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all .3s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--teal));
+      transform: scaleX(0); transition: transform .3s;
+    }
+    .feature-card:hover::after { transform: scaleX(1); }
+    .feature-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      font-size: 2rem; margin-bottom: 16px;
+    }
+    .feature-card h3 { margin-bottom: 8px; }
+
+    /* CTA */
+    .cta-section {
+      padding: 80px 0; text-align: center;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card2) 100%);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-lg);
+      padding: 80px 40px;
+      position: relative; overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.12), transparent 60%);
+    }
+    .cta-box h2 { position: relative; margin-bottom: 16px; }
+    .cta-box p { position: relative; margin-bottom: 32px; }
+    .cta-box .btn { position: relative; }
+
+    /* FOOTER */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center; color: var(--text-3);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      .steps { grid-template-columns: repeat(2,1fr); }
+      .steps::before { display: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 24px; flex-wrap: wrap; }
+    }
+    @media (max-width: 480px) {
+      .steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav" id="main-nav"></header>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+      <div class="hero-glow-1"></div>
+      <div class="hero-glow-2"></div>
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge fade-in">
+          <span data-lang="home">Bosh sahifa</span> — Test asosidagi ta'lim
+        </div>
+        <h1 class="fade-in-1">
+          Bilimingizni<br>
+          <span class="gradient-text" id="hero-title-uz">sinab, o'stiring</span>
+          <span class="gradient-text" id="hero-title-ru" style="display:none">проверяйте и развивайте</span>
+        </h1>
+        <p class="fade-in-2" id="hero-desc-uz">
+          Har bir darsdan so'ng test topshiring. 80% dan yuqori ball olsangiz — keyingi dars ochiladi.
+          O'z sur'atingizda, chuqur o'rganing.
+        </p>
+        <p class="fade-in-2" id="hero-desc-ru" style="display:none">
+          Сдавайте тест после каждого урока. Набрали 80% — следующий урок открыт.
+          Учитесь в своём темпе, глубоко и эффективно.
+        </p>
+        <div class="hero-actions fade-in-3">
+          <a href="/course" class="btn btn-primary btn-lg" id="start-btn">
+            🚀 <span data-lang="course">Kursni boshlash</span>
+          </a>
+          <a href="/register" class="btn btn-secondary btn-lg" id="reg-btn">
+            <span data-lang="register">Ro'yxatdan o'tish</span>
+          </a>
+        </div>
+        <div class="hero-stats fade-in-4">
+          <div>
+            <div class="stat-num">80%</div>
+            <div class="stat-label" id="stat1-uz">Minimal o'tish bali</div>
+            <div class="stat-label" id="stat1-ru" style="display:none">Минимальный проходной балл</div>
+          </div>
+          <div>
+            <div class="stat-num">∞</div>
+            <div class="stat-label" id="stat2-uz">Cheksiz urinish</div>
+            <div class="stat-label" id="stat2-ru" style="display:none">Неограниченных попыток</div>
+          </div>
+          <div>
+            <div class="stat-num">A-D</div>
+            <div class="stat-label" id="stat3-uz">Ko'p tanlovli test</div>
+            <div class="stat-label" id="stat3-ru" style="display:none">Тест с выбором ответа</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" style="background: var(--bg-1);">
+    <div class="container">
+      <div class="text-center">
+        <div class="section-label" id="how-label-uz">Qanday ishlaydi?</div>
+        <div class="section-label" id="how-label-ru" style="display:none">Как это работает?</div>
+        <h2 class="section-title" id="how-title-uz">4 oddiy qadam</h2>
+        <h2 class="section-title" id="how-title-ru" style="display:none">4 простых шага</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3 id="step1-uz">Ro'yxatdan o'ting</h3>
+          <h3 id="step1-ru" style="display:none">Зарегистрируйтесь</h3>
+          <p id="step1p-uz">Bepul hisob yarating va platformaga kiring</p>
+          <p id="step1p-ru" style="display:none">Создайте бесплатный аккаунт и войдите</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3 id="step2-uz">Video ko'ring</h3>
+          <h3 id="step2-ru" style="display:none">Смотрите видео</h3>
+          <p id="step2p-uz">Darsni tomosha qilib, bilim oling</p>
+          <p id="step2p-ru" style="display:none">Смотрите урок и получайте знания</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3 id="step3-uz">Test topshiring</h3>
+          <h3 id="step3-ru" style="display:none">Пройдите тест</h3>
+          <p id="step3p-uz">80%+ ball olsangiz keyingi dars ochiladi</p>
+          <p id="step3p-ru" style="display:none">Набрали 80%+ — открывается следующий урок</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3 id="step4-uz">Bo'limni yakunlang</h3>
+          <h3 id="step4-ru" style="display:none">Завершите раздел</h3>
+          <p id="step4p-uz">Final test → keyingi bo'lim ochiladi</p>
+          <p id="step4p-ru" style="display:none">Финальный тест → открывается следующий раздел</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section">
+    <div class="container">
+      <div class="text-center">
+        <div class="section-label" id="feat-label-uz">Afzalliklar</div>
+        <div class="section-label" id="feat-label-ru" style="display:none">Преимущества</div>
+        <h2 class="section-title" id="feat-title-uz">Nima uchun aynan biz?</h2>
+        <h2 class="section-title" id="feat-title-ru" style="display:none">Почему именно мы?</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3 id="f1-uz">Test asosidagi ta'lim</h3>
+          <h3 id="f1-ru" style="display:none">Тест-ориентированное обучение</h3>
+          <p id="f1p-uz">Har bir darsdan so'ng test. Tushunmasdan o'tib ketolmaysiz.</p>
+          <p id="f1p-ru" style="display:none">Тест после каждого урока. Нельзя перейти, не усвоив материал.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔄</div>
+          <h3 id="f2-uz">Cheksiz urinish</h3>
+          <h3 id="f2-ru" style="display:none">Неограниченные попытки</h3>
+          <p id="f2p-uz">Istalgancha qaytadan topshirishingiz mumkin. Xato qilish — o'rganish!</p>
+          <p id="f2p-ru" style="display:none">Можно пересдавать сколько угодно. Ошибка — это обучение!</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3 id="f3-uz">Progress kuzatuv</h3>
+          <h3 id="f3-ru" style="display:none">Отслеживание прогресса</h3>
+          <p id="f3p-uz">Har bir dars va bo'limda qancha o'tganingizni real vaqtda ko'ring.</p>
+          <p id="f3p-ru" style="display:none">Смотрите прогресс по каждому уроку и разделу в реальном времени.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3 id="f4-uz">Ketma-ket o'rganish</h3>
+          <h3 id="f4-ru" style="display:none">Последовательное обучение</h3>
+          <p id="f4p-uz">Keyingi dars oldingi testni topshirgandan keyin ochiladi.</p>
+          <p id="f4p-ru" style="display:none">Следующий урок открывается только после прохождения предыдущего теста.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🆓</div>
+          <h3 id="f5-uz">Birinchi dars bepul</h3>
+          <h3 id="f5-ru" style="display:none">Первый урок бесплатно</h3>
+          <p id="f5p-uz">Ro'yxatdan o'tmasdan ham birinchi darsni ko'rib sinab ko'ring.</p>
+          <p id="f5p-ru" style="display:none">Посмотрите первый урок без регистрации и попробуйте.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3 id="f6-uz">Har qanday qurilma</h3>
+          <h3 id="f6-ru" style="display:none">Любое устройство</h3>
+          <p id="f6p-uz">Kompyuter, telefon yoki planshetdan o'qishingiz mumkin.</p>
+          <p id="f6p-ru" style="display:none">Учитесь с компьютера, телефона или планшета.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2 class="section-title" id="cta-title-uz">Hoziroq boshlang!</h2>
+        <h2 class="section-title" id="cta-title-ru" style="display:none">Начните прямо сейчас!</h2>
+        <p id="cta-p-uz">Minglab o'quvchilar bilan birga bilimingizni oshiring</p>
+        <p id="cta-p-ru" style="display:none">Повышайте свои знания вместе с тысячами учеников</p>
+        <a href="/register" class="btn btn-primary btn-lg" id="cta-btn-uz">
+          🚀 Bepul ro'yxatdan o'tish
+        </a>
+        <a href="/register" class="btn btn-primary btn-lg" id="cta-btn-ru" style="display:none">
+          🚀 Зарегистрироваться бесплатно
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>© 2024 EduPlatform. <span id="footer-uz">Barcha huquqlar himoyalangan</span><span id="footer-ru" style="display:none">Все права защищены</span></p>
+    </div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    // Logged in bo'lsa register btn ni yashir
+    document.addEventListener('DOMContentLoaded', () => {
+      if (Auth.isLoggedIn()) {
+        const rb = document.getElementById('reg-btn');
+        if (rb) rb.style.display = 'none';
+      }
+
+      // Lang switch
+      const origSet = I18N.set.bind(I18N);
+      I18N.set = function(lang) {
+        origSet(lang);
+        const isRu = lang === 'ru';
+        const ruEls = document.querySelectorAll('[id$="-ru"]');
+        const uzEls = document.querySelectorAll('[id$="-uz"]');
+        ruEls.forEach(el => el.style.display = isRu ? '' : 'none');
+        uzEls.forEach(el => el.style.display = isRu ? 'none' : '');
+      };
+      I18N.set(I18N.current);
+    });
+  </script>
+</body>
+</html>

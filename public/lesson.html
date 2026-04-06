@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dars — EduPlatform</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    /* ── LAYOUT ──────────────────────────────────────────────── */
+    .lesson-layout{display:grid;grid-template-columns:1fr 340px;gap:24px;padding:24px;max-width:1400px;margin:0 auto}
+    .back-btn{display:inline-flex;align-items:center;gap:8px;color:var(--text-2);font-size:.9rem;margin-bottom:20px;transition:.2s;text-decoration:none}
+    .back-btn:hover{color:var(--text-1)}
+    .video-wrapper{background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;border:1px solid var(--border);position:relative}
+    .video-wrapper iframe{width:100%;height:100%;border:none}
+    .video-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:var(--bg-card)}
+    .video-title{font-family:var(--font-display);font-size:1.5rem;font-weight:800;margin-bottom:8px}
+    .video-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+    .watched-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);background:rgba(16,185,129,.12);color:var(--success);border:1px solid rgba(16,185,129,.25);font-size:.88rem;font-weight:600}
+    .right-panel{display:flex;flex-direction:column;gap:16px}
+    .info-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+    .info-card h3{font-size:1rem;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+    .info-row:last-child{border-bottom:none}
+    .info-lbl{color:var(--text-2)}
+    .info-val{font-weight:600}
+
+    /* ── VIDEO TABS ──────────────────────────────────────────── */
+    .video-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+    .video-tab{
+      padding:7px 16px;border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;
+      cursor:pointer;border:1px solid var(--border);background:var(--bg-2);
+      color:var(--text-2);transition:all .15s;
+    }
+    .video-tab:hover{border-color:var(--border-bright);color:var(--text-1)}
+    .video-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent-bright)}
+    .video-tab-badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:18px;height:18px;border-radius:50%;
+      font-size:.7rem;background:var(--accent);color:#fff;margin-left:5px;
+    }
+
+    /* ── PREMIUM BANNER ──────────────────────────────────────── */
+    .premium-banner{background:linear-gradient(135deg,#f59e0b22,#f59e0b11);border:1px solid #f59e0b44;border-radius:var(--radius);padding:20px;text-align:center}
+    .premium-banner h3{color:#f59e0b;margin-bottom:8px}
+    .premium-banner p{color:var(--text-2);font-size:.9rem;margin-bottom:16px}
+
+    /* ── FINAL HERO ──────────────────────────────────────────── */
+    .final-hero{background:linear-gradient(135deg,var(--bg-card),var(--bg-card2));border:1px solid var(--border-bright);border-radius:var(--radius);padding:32px;text-align:center;position:relative;overflow:hidden;margin-bottom:20px}
+    .final-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--teal))}
+
+    @media(max-width:900px){.lesson-layout{grid-template-columns:1fr}.right-panel{order:-1}}
+    @media(max-width:600px){.lesson-layout{padding:12px}.video-title{font-size:1.2rem}}
+  </style>
+</head>
+<body>
+<header class="nav" id="main-nav"></header>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrapper">
+  <div class="lesson-layout" id="layout">
+    <div style="padding:60px;text-align:center;color:var(--text-3)">
+      <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border-width:3px"></div>
+      Yuklanmoqda...
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+const parts    = location.pathname.split('/');
+const rawId    = parts[parts.length-1];
+const isFinal  = rawId.startsWith('final-');
+const entityId = parseInt(isFinal ? rawId.replace('final-','') : rawId);
+
+let lessonData = null;
+
+async function init() {
+  if (isFinal) { if (!requireAuth()) return; await loadFinalPage(); }
+  else          { await loadLessonPage(); }
+}
+
+// ── Test sahifasiga o'tish ────────────────────────────────────
+function goToTest(type) {
+  location.href = `/test?type=${type}&id=${entityId}&back=${encodeURIComponent(location.pathname)}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DARS SAHIFASI
+// ═══════════════════════════════════════════════════════════════
+async function loadLessonPage() {
+  try {
+    if (Auth.isLoggedIn()) await Auth.refreshPremium();
+    const course = await Http.get('/api/course/overview');
+    let found = null;
+    for (const sec of course.sections)
+      for (const l of sec.lessons)
+        if (l.id === entityId) { found = l; break; }
+    if (!found) throw {message:'Dars topilmadi'};
+    lessonData = found;
+    renderLesson();
+  } catch(e) {
+    document.getElementById('layout').innerHTML =
+      `<div style="padding:40px;color:var(--danger)">⚠️ ${e.message}</div>`;
+  }
+}
+
+function renderLesson() {
+  const l = lessonData;
+  document.title = l.title + ' — EduPlatform';
+  const loggedIn = Auth.isLoggedIn();
+
+  // VideoUrls ro'yxatini aniqlash
+  const videos = (l.videoUrls && l.videoUrls.length > 0) ? l.videoUrls : (l.videoUrl ? [l.videoUrl] : []);
+  const hasMultipleVideos = videos.length > 1;
+
+  // Tab HTML (bir nechta video bo'lsa)
+  const tabsHtml = hasMultipleVideos ? `
+    <div class="video-tabs" id="video-tabs">
+      ${videos.map((url, i) => `
+        <button class="video-tab ${i===0?'active':''}" onclick="switchVideo(${i})" id="vtab-${i}">
+          📹 Video ${i+1}${i===0?' <span class="video-tab-badge">▶</span>':''}        </button>
+      `).join('')}    </div>
+  ` : '';
+
+  // Video player
+  const videoPlayerHtml = videos.length > 0
+    ? `<iframe id="main-video-iframe" src="${videos[0]}" allowfullscreen allow="autoplay;encrypted-media;picture-in-picture"></iframe>`
+    : `<div class="video-placeholder">
+         <div style="font-size:3.5rem">${l.isPremiumLocked ? '💎' : '🔒'}</div>
+         <p style="color:var(--text-2);text-align:center;max-width:280px;font-size:.9rem">
+           ${l.isPremiumLocked
+             ? 'Bu darsni ko\'rish uchun premium obuna kerak'
+             : 'Bu darsni ko\'rish uchun oldingi dars testini toping (80%+)'}
+         </p>
+       </div>`;
+
+  document.getElementById('layout').innerHTML = `
+    <div class="video-panel fade-in">
+      <a href="/course" class="back-btn">← Kursga qaytish</a>
+
+      ${tabsHtml}
+
+      <div class="video-wrapper">
+        ${videoPlayerHtml}
+      </div>
+
+      ${hasMultipleVideos ? `
+      <div style="margin-top:8px;padding:8px 12px;background:var(--bg-2);border-radius:var(--radius-sm);border:1px solid var(--border);display:flex;align-items:center;gap:8px">
+        <span style="font-size:.8rem;color:var(--text-3)">🎬</span>
+        <span style="font-size:.82rem;color:var(--text-2)">Bu darsda <b style="color:var(--accent-bright)">${videos.length} ta video</b> mavjud. Yuqoridagi tablardan tanlang.</span>
+      </div>` : ''}
+
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <h1 class="video-title" style="flex:1">${l.title}</h1>
+          ${l.isFree ? '<span class="badge badge-green">🆓 Bepul</span>' : ''}
+        </div>
+        ${l.description ? `<p class="text-muted mt-8" style="font-size:.95rem">${l.description}</p>` : ''}
+        <div class="video-actions">
+          ${videos.length > 0 && !l.videoWatched && loggedIn
+            ? `<button class="btn btn-primary" id="watch-btn" onclick="markWatched()">✅ Videoni ko'rdim</button>`
+            : l.videoWatched
+              ? `<div class="watched-badge">✅ Video ko'rildi</div>`
+              : !loggedIn && videos.length > 0
+                ? `<a href="/login" class="btn btn-primary">Testni topshirish uchun kiring →</a>`
+                : ''}
+          ${l.videoWatched
+            ? l.testPassed
+              ? `<div class="watched-badge" style="background:rgba(99,102,241,.12);color:var(--accent-bright);border-color:rgba(99,102,241,.3)">
+                   ✅ Test o'tildi — ${l.bestScore}%
+                 </div>
+                 <button class="btn btn-ghost btn-sm" onclick="goToTest('lesson')">🔄 Qaytadan</button>`
+              : `<button class="btn btn-secondary" onclick="goToTest('lesson')">📝 Testni boshlash</button>`
+            : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel fade-in-2">
+      <div class="info-card">
+        <h3>📊 Statistika</h3>
+        <div class="info-row">
+          <span class="info-lbl">Holat</span>
+          <span class="info-val">${l.testPassed
+            ? `<span style="color:var(--success)">✅ O'tildi</span>`
+            : l.videoWatched
+              ? `<span style="color:var(--warning)">▶ Test kutilmoqda</span>`
+              : `<span style="color:var(--text-3)">○ Ko'rilmagan</span>`}</span>
+        </div>
+        ${hasMultipleVideos ? `<div class="info-row"><span class="info-lbl">Videolar soni</span><span class="info-val" style="color:var(--accent-bright)">🎬 ${videos.length} ta</span></div>` : ''}
+        ${l.durationMinutes ? `<div class="info-row"><span class="info-lbl">Davomiyligi</span><span class="info-val">${l.durationMinutes} daqiqa</span></div>` : ''}
+        <div class="info-row"><span class="info-lbl">Savollar</span><span class="info-val">${l.totalQuestions||0} ta</span></div>
+        ${l.totalQuestions > 0 ? `<div class="info-row"><span class="info-lbl">Testda</span><span class="info-val" style="color:var(--teal)">${Math.min(25,l.totalQuestions)} ta (aralashtirilgan)</span></div>` : ''}
+        <div class="info-row"><span class="info-lbl">Urinishlar</span><span class="info-val">${l.testAttempts||0}</span></div>
+${l.bestScore!=null 
+? `<div class="info-row">
+     <span class="info-lbl">Eng yuqori ball</span>
+     <span class="info-val" style="color:${l.bestScore>=80 ? 'var(--success)' : 'var(--warning)'}">
+       ${l.bestScore}%
+     </span>
+   </div>` 
+: ''}      </div>
+
+      ${hasMultipleVideos ? `
+      <div class="info-card">
+        <h3>🎬 Videolar ro'yxati</h3>
+        ${videos.map((url, i) => `
+        <div class="info-row" style="cursor:pointer" onclick="switchVideo(${i})">
+          <span class="info-lbl" style="display:flex;align-items:center;gap:6px">
+            <span style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);display:inline-flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--accent-bright)">${i+1}</span>
+            Video ${i+1}
+          </span>
+          <span class="info-val">
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();switchVideo(${i})">▶ Ko'rish</button>
+          </span>
+        </div>`).join('')}      </div>` : ''}
+
+      ${l.isPremiumLocked ? `
+      <div class="premium-banner">
+        <h3>💎 Premium kerak</h3>
+        <p>Barcha darslarni ko'rish va testlardan o'tish uchun premium obuna oling.</p>
+        <a href="/profile" class="btn btn-primary" style="display:inline-flex">💳 Premium sotib olish</a>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+// ── Video tab almashtirish ────────────────────────────────────
+function switchVideo(idx) {
+  const l = lessonData;
+  const videos = (l.videoUrls && l.videoUrls.length > 0) ? l.videoUrls : (l.videoUrl ? [l.videoUrl] : []);
+  const iframe = document.getElementById('main-video-iframe');
+  if (!iframe) return;
+
+  // iframe src ni yangilash
+  iframe.src = '';
+  setTimeout(() => { iframe.src = videos[idx]; }, 50);
+
+  // Tab active holatini yangilash
+  document.querySelectorAll('.video-tab').forEach((tab, i) => {
+    tab.classList.toggle('active', i === idx);
+    tab.innerHTML = `📹 Video ${i+1}${i===idx?' <span class="video-tab-badge">▶</span>':''}`;
+  });
+}
+
+async function markWatched() {
+  const btn = document.getElementById('watch-btn');
+  if (!btn) return;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    await Http.post(`/api/course/lessons/${entityId}/watch`, {});
+    lessonData.videoWatched = true;
+    Toast.success('Video ko\'rildi! ✅');
+    setTimeout(renderLesson, 400);
+  } catch(e) {
+    Toast.error(e.message);
+    btn.disabled = false; btn.innerHTML = '✅ Videoni ko\'rdim';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FINAL TEST SAHIFASI
+// ═══════════════════════════════════════════════════════════════
+async function loadFinalPage() {
+  try {
+    if (Auth.isLoggedIn()) await Auth.refreshPremium();
+    const course = await Http.get('/api/course/overview');
+    const sec = course.sections.find(s => s.id === entityId);
+    if (!sec) throw {message:"Bo'lim topilmadi"};
+    document.title = sec.title + ' — Final Test';
+    document.getElementById('layout').innerHTML = `
+      <div class="video-panel fade-in">
+        <a href="/course" class="back-btn">← Kursga qaytish</a>
+        <div class="final-hero">
+          <div style="font-size:3rem;margin-bottom:12px">🏆</div>
+          <h2 style="margin-bottom:6px">${sec.title}</h2>
+          <h3 style="color:var(--accent-bright);margin-bottom:10px">Bo'lim Yakuniy Testi</h3>
+          <p class="text-muted">80%+ ball oling va keyingi bo'limni oching!</p>
+          ${sec.finalTestBestScore!=null?`<div class="badge badge-blue" style="margin-top:12px;display:inline-flex">Eng yuqori ball: <b style="margin-left:4px">${sec.finalTestBestScore}%</b></div>`:''}
+        </div>
+        <div style="text-align:center">
+          <button class="btn btn-primary btn-lg" onclick="goToTest('final')">🚀 Testni boshlash</button>
+        </div>
+      </div>
+      <div class="right-panel fade-in-2">
+        <div class="info-card">
+          <h3>ℹ️ Ma'lumot</h3>
+          <div class="info-row"><span class="info-lbl">O'tish bali</span><span class="info-val" style="color:var(--accent-bright)">80%</span></div>
+          ${sec.finalTestQuestions?`<div class="info-row"><span class="info-lbl">Jami savollar</span><span class="info-val">${sec.finalTestQuestions} ta</span></div>`:''}
+          <div class="info-row"><span class="info-lbl">Testda beriladi</span><span class="info-val" style="color:var(--teal)">25 ta (aralashtirilgan)</span></div>
+          <div class="info-row"><span class="info-lbl">Urinishlar</span><span class="info-val">${sec.finalTestAttempts||0}</span></div>
+          ${sec.finalTestBestScore!=null?`<div class="info-row"><span class="info-lbl">Eng yuqori</span><span class="info-val" style="color:${sec.finalTestBestScore>=80?'var(--success)':'var(--warning)'}">${sec.finalTestBestScore}%</span></div>`:''}
+          <div class="info-row"><span class="info-lbl">Holat</span><span class="info-val">${sec.finalTestPassed?`<span style="color:var(--success)">✅ O'tildi</span>`:`<span style="color:var(--warning)">⏳ Kutilmoqda</span>`}</span></div>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('layout').innerHTML =
+      `<div style="padding:40px;color:var(--danger)">⚠️ ${e.message}</div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

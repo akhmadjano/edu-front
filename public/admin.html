@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — EduPlatform</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - var(--nav-h)); }
+
+    .admin-sidebar {
+      background: var(--bg-1); border-right: 1px solid var(--border);
+      padding: 24px 0; position: sticky; top: var(--nav-h);
+      height: calc(100vh - var(--nav-h)); overflow-y: auto;
+    }
+    .admin-sidebar-title {
+      padding: 0 20px 16px; font-size: .78rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-3);
+      border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .admin-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; cursor: pointer;
+      color: var(--text-2); font-size: .9rem; font-weight: 500;
+      transition: .15s; border-left: 2px solid transparent;
+    }
+    .admin-nav-item:hover { background: var(--bg-2); color: var(--text-1); }
+    .admin-nav-item.active { color: var(--accent-bright); background: var(--accent-dim); border-left-color: var(--accent); }
+
+    .admin-main { padding: 32px; overflow-y: auto; }
+
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    .admin-header { margin-bottom: 28px; }
+    .admin-header h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
+
+    /* TABLE */
+    .table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--bg-2); }
+    th { padding: 12px 16px; text-align: left; font-size: .8rem; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
+    td { padding: 12px 16px; border-top: 1px solid var(--border); font-size: .88rem; vertical-align: middle; }
+    tr:hover td { background: var(--bg-2); }
+
+    /* FORM CARD */
+    .form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; max-width: 600px; }
+    .form-card h3 { font-family: var(--font-display); margin-bottom: 20px; font-size: 1.1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .admin-form { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ACCORDION for sections/lessons */
+    .accordion-item {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
+    }
+    .accordion-header {
+      padding: 16px 20px; display: flex; align-items: center; gap: 12px;
+      cursor: pointer; transition: background .15s;
+    }
+    .accordion-header:hover { background: var(--bg-2); }
+    .accordion-title { flex: 1; font-weight: 700; }
+    .accordion-meta { font-size: .8rem; color: var(--text-3); }
+    .accordion-body { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border); }
+    .accordion-body.open { display: block; }
+
+    .action-btns { display: flex; gap: 8px; }
+
+    @media(max-width:768px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .admin-sidebar { position: static; height: auto; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav" id="main-nav"></header>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal" style="max-width:360px;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:12px">⚠️</div>
+      <h3 id="confirm-title-uz">Rostdan ham o'chirmoqchimisiz?</h3>
+      <h3 id="confirm-title-ru" style="display:none">Вы уверены, что хотите удалить?</h3>
+      <p class="text-muted mt-8 mb-24" id="confirm-desc"></p>
+      <div class="flex-center gap-12">
+        <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">
+          <span id="c-cancel-uz">Bekor</span><span id="c-cancel-ru" style="display:none">Отмена</span>
+        </button>
+        <button class="btn btn-danger" id="confirm-ok-btn">
+          🗑 <span id="c-del-uz">O'chirish</span><span id="c-del-ru" style="display:none">Удалить</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="admin-layout">
+      <!-- SIDEBAR -->
+      <aside class="admin-sidebar">
+        <div class="admin-sidebar-title">Admin Panel</div>
+        <div class="admin-nav-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
+        <div class="admin-nav-item" onclick="showSection('course')">📚 <span id="nav-course-uz">Kurs</span><span id="nav-course-ru" style="display:none">Курс</span></div>
+        <div class="admin-nav-item" onclick="showSection('sections')">📂 <span id="nav-sec-uz">Bo'limlar</span><span id="nav-sec-ru" style="display:none">Разделы</span></div>
+        <div class="admin-nav-item" onclick="showSection('lessons')">🎬 <span id="nav-les-uz">Darslar</span><span id="nav-les-ru" style="display:none">Уроки</span></div>
+        <div class="admin-nav-item" onclick="showSection('questions')">❓ <span id="nav-q-uz">Savollar</span><span id="nav-q-ru" style="display:none">Вопросы</span></div>
+        <div class="admin-nav-item" onclick="showSection('payments')">💳 <span>To'lovlar</span></div>
+        <div class="admin-nav-item" onclick="showSection('users')">👥 <span id="nav-usr-uz">Foydalanuvchilar</span><span id="nav-usr-ru" style="display:none">Пользователи</span></div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="admin-main">
+
+        <!-- DASHBOARD -->
+        <div class="admin-section active" id="section-dashboard">
+          <div class="admin-header">
+            <h2>📊 Dashboard</h2>
+            <p class="text-muted" id="dash-sub-uz">Platforma umumiy statistikasi</p>
+            <p class="text-muted" id="dash-sub-ru" style="display:none">Общая статистика платформы</p>
+          </div>
+          <div class="grid-4" id="dash-stats">
+            <div class="skeleton" style="height:100px;border-radius:var(--radius)"></div>
+            <div class="skeleton" style="height:100px;border-radius:var(--radius)"></div>
+            <div class="skeleton" style="height:100px;border-radius:var(--radius)"></div>
+            <div class="skeleton" style="height:100px;border-radius:var(--radius)"></div>
+          </div>
+          <div class="mt-24">
+            <h3 style="font-family:var(--font-display);margin-bottom:16px" id="rec-uz">So'nggi foydalanuvchilar</h3>
+            <h3 style="font-family:var(--font-display);margin-bottom:16px" id="rec-ru" style="display:none">Последние пользователи</h3>
+            <div class="table-wrap" id="recent-users-table">
+              <div style="padding:20px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COURSE -->
+        <div class="admin-section" id="section-course">
+          <div class="admin-header flex-between">
+            <div>
+              <h2 id="crs-title-uz">Kurs Boshqaruvi</h2>
+              <h2 id="crs-title-ru" style="display:none">Управление курсом</h2>
+            </div>
+          </div>
+          <div class="form-card" id="course-form-card">
+            <h3 id="crs-h-uz">Kurs yaratish / tahrirlash</h3>
+            <h3 id="crs-h-ru" style="display:none">Создать / редактировать курс</h3>
+            <form class="admin-form" onsubmit="saveCourse(event)">
+              <div class="form-group">
+                <label class="form-label" id="ctit-uz">Kurs sarlavhasi *</label>
+                <label class="form-label" id="ctit-ru" style="display:none">Название курса *</label>
+                <input type="text" class="form-input" id="course-title" required placeholder="Masalan: Python dasturlash">
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="cdesc-uz">Tavsif</label>
+                <label class="form-label" id="cdesc-ru" style="display:none">Описание</label>
+                <textarea class="form-textarea" id="course-desc" placeholder="Kurs haqida..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="cthumb-uz">Thumbnail URL</label>
+                <label class="form-label" id="cthumb-ru" style="display:none">URL изображения</label>
+                <input type="url" class="form-input" id="course-thumb" placeholder="https://...">
+              </div>
+              <button type="submit" class="btn btn-primary" style="align-self:flex-start">
+                💾 <span id="csave-uz">Saqlash</span><span id="csave-ru" style="display:none">Сохранить</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- SECTIONS -->
+        <div class="admin-section" id="section-sections">
+          <div class="admin-header flex-between">
+            <div>
+              <h2 id="sec-title-uz">Bo'limlar</h2>
+              <h2 id="sec-title-ru" style="display:none">Разделы</h2>
+            </div>
+            <button class="btn btn-primary" onclick="openAddSection()">
+              + <span id="sec-add-uz">Bo'lim qo'shish</span><span id="sec-add-ru" style="display:none">Добавить раздел</span>
+            </button>
+          </div>
+
+          <div class="form-card mb-24" id="add-section-form" style="display:none">
+            <h3 id="sadd-uz">Yangi bo'lim</h3>
+            <h3 id="sadd-ru" style="display:none">Новый раздел</h3>
+            <form class="admin-form" onsubmit="saveSection(event)">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" id="stit-uz">Sarlavha *</label>
+                  <label class="form-label" id="stit-ru" style="display:none">Название *</label>
+                  <input type="text" class="form-input" id="sec-title-inp" required placeholder="1-Bo'lim">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="sord-uz">Tartib raqami *</label>
+                  <label class="form-label" id="sord-ru" style="display:none">Порядковый номер *</label>
+                  <input type="number" class="form-input" id="sec-order" required min="1" value="1">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="sdesc-uz">Tavsif</label>
+                <label class="form-label" id="sdesc-ru" style="display:none">Описание</label>
+                <input type="text" class="form-input" id="sec-desc" placeholder="...">
+              </div>
+              <div style="display:flex;gap:10px">
+                <button type="submit" class="btn btn-primary">💾 <span id="ssave-uz">Saqlash</span><span id="ssave-ru" style="display:none">Сохранить</span></button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('add-section-form').style.display='none'">
+                  <span id="scancel-uz">Bekor</span><span id="scancel-ru" style="display:none">Отмена</span>
+                </button>
+              </div>
+            </form>
+          </div>
+          <div id="sections-list"><div class="spinner" style="margin:20px auto;display:block"></div></div>
+        </div>
+
+        <!-- LESSONS -->
+        <div class="admin-section" id="section-lessons">
+          <div class="admin-header flex-between">
+            <div>
+              <h2 id="les-title-uz">Darslar</h2>
+              <h2 id="les-title-ru" style="display:none">Уроки</h2>
+            </div>
+            <button class="btn btn-primary" onclick="openAddLesson()">
+              + <span id="les-add-uz">Dars qo'shish</span><span id="les-add-ru" style="display:none">Добавить урок</span>
+            </button>
+          </div>
+
+          <div class="form-card mb-24" id="add-lesson-form" style="display:none">
+            <h3 id="ladd-uz">Yangi dars</h3>
+            <h3 id="ladd-ru" style="display:none">Новый урок</h3>
+            <form class="admin-form" onsubmit="saveLesson(event)">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" id="ltit-uz">Dars sarlavhasi *</label>
+                  <label class="form-label" id="ltit-ru" style="display:none">Название урока *</label>
+                  <input type="text" class="form-input" id="les-title-inp" required placeholder="1-Dars">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="lsec-uz">Bo'lim *</label>
+                  <label class="form-label" id="lsec-ru" style="display:none">Раздел *</label>
+                  <select class="form-select" id="les-section-id" required>
+                    <option value="">-- Tanlang --</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="lvid-uz">Videolar * — YouTube embed URL yoki Cloudinary (bir nechta qo'shish mumkin)</label>
+                <label class="form-label" id="lvid-ru" style="display:none">Видео * — YouTube embed URL или Cloudinary (можно добавить несколько)</label>
+                <!-- Multi-video inputs -->
+                <div id="video-inputs-container" style="display:flex;flex-direction:column;gap:12px">
+                  <!-- Video 1 — asosiy (majburiy) -->
+                  <div class="video-input-row" data-index="0" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--bg-2)">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                      <span style="font-size:.78rem;font-weight:700;color:var(--accent-bright)">📹 Video 1 (asosiy)</span>
+                    </div>
+                    <input type="text" class="form-input video-url-input" id="les-video" placeholder="https://www.youtube.com/embed/xxxxx" style="margin-bottom:8px">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                      <label id="les-video-upload-label" style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:var(--accent-dim);color:var(--accent-bright);border:1px solid var(--border-bright);border-radius:var(--radius-sm);cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background='var(--accent-dim)'">
+                        ☁️ <span>Cloudinary ga yukla</span>
+                        <input type="file" id="les-video-file" accept="video/*" style="display:none" onchange="uploadLessonVideo(this, 0)">
+                      </label>
+                      <span style="font-size:.75rem;color:var(--text-3)">MP4, MOV, AVI · max 500MB</span>
+                    </div>
+                    <div id="les-video-progress" style="display:none;margin-top:8px">
+                      <div style="height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden;margin-bottom:4px">
+                        <div id="les-video-progress-fill" style="height:100%;background:var(--accent);border-radius:3px;width:0%;transition:width .3s"></div>
+                      </div>
+                      <div id="les-video-progress-text" style="font-size:.78rem;color:var(--text-2)">Yuklanmoqda...</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Video qo'shish tugmasi -->
+                <button type="button" class="btn btn-ghost btn-sm" style="margin-top:8px;border:1px dashed var(--border-bright);width:100%" onclick="addVideoInput()">
+                  + Yangi video qo'shish
+                </button>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" id="lord-uz">Tartib raqami *</label>
+                  <label class="form-label" id="lord-ru" style="display:none">Порядок *</label>
+                  <input type="number" class="form-input" id="les-order" required min="1" value="1">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="ldur-uz">Davomiyligi (daqiqa)</label>
+                  <label class="form-label" id="ldur-ru" style="display:none">Длительность (мин)</label>
+                  <input type="number" class="form-input" id="les-duration" min="1" placeholder="10">
+                </div>
+              </div>
+              <div class="form-group">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                  <input type="checkbox" id="les-free" style="width:16px;height:16px;accent-color:var(--accent)">
+                  <span id="lfree-uz">Bepul dars (1-dars uchun)</span>
+                  <span id="lfree-ru" style="display:none">Бесплатный урок (для 1-го урока)</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="form-label" id="ldesc2-uz">Tavsif</label>
+                <label class="form-label" id="ldesc2-ru" style="display:none">Описание</label>
+                <input type="text" class="form-input" id="les-desc" placeholder="...">
+              </div>
+              <div style="display:flex;gap:10px">
+                <button type="submit" class="btn btn-primary">💾 <span id="lsave-uz">Saqlash</span><span id="lsave-ru" style="display:none">Сохранить</span></button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('add-lesson-form').style.display='none'">
+                  <span id="lcancel-uz">Bekor</span><span id="lcancel-ru" style="display:none">Отмена</span>
+                </button>
+              </div>
+            </form>
+          </div>
+          <div id="lessons-list"><div class="spinner" style="margin:20px auto;display:block"></div></div>
+        </div>
+
+        <!-- QUESTIONS -->
+        <div class="admin-section" id="section-questions">
+          <div class="admin-header">
+            <h2>Test Savollari</h2>
+          </div>
+
+          <!-- TAB NAVIGATION -->
+          <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" id="q-tab-single" onclick="showQTab('single')">✏️ Bitta savol</button>
+            <button class="btn btn-ghost btn-sm" id="q-tab-bulk" onclick="showQTab('bulk')">📋 JSON Bulk Import</button>
+          </div>
+
+          <!-- SINGLE QUESTION TAB -->
+          <div id="q-tab-single-content">
+            <!-- Dars savoli -->
+            <div class="form-card mb-24">
+              <h3>➕ Dars testiga savol qo'shish</h3>
+              <p class="text-muted text-sm" style="margin-bottom:16px">Variantlar istalgancha bo'lishi mumkin (2-10). To'g'ri javoblar ham bir nechta bo'lishi mumkin.</p>
+              <div class="admin-form">
+                <div class="form-group">
+                  <label class="form-label">Dars tanlang *</label>
+                  <select class="form-select" id="q-lesson-id" required>
+                    <option value="">-- Tanlang --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Savol matni *</label>
+                  <textarea class="form-textarea" id="q-text" required placeholder="Savol matni..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Rasm URL (ixtiyoriy)</label>
+                  <input type="url" class="form-input" id="q-image" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Variantlar * <span class="text-muted text-sm">(kamida 2 ta)</span></label>
+                  <div id="q-options-list"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addOption('q')" style="margin-top:8px">+ Variant qo'shish</button>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">To'g'ri javob(lar) * <span class="text-muted text-sm">(variant matni bilan aynan mos bo'lishi kerak)</span></label>
+                  <div id="q-correct-list"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addCorrect('q')" style="margin-top:8px">+ To'g'ri javob qo'shish</button>
+                </div>
+                <button class="btn btn-primary" style="align-self:flex-start" onclick="saveLessonQuestion()">
+                  + Savolni qo'shish
+                </button>
+              </div>
+            </div>
+
+            <!-- Final test savoli -->
+            <div class="form-card">
+              <h3>🏆 Bo'lim final testiga savol qo'shish</h3>
+              <div class="admin-form">
+                <div class="form-group">
+                  <label class="form-label">Bo'lim tanlang *</label>
+                  <select class="form-select" id="fq-section-id" required>
+                    <option value="">-- Tanlang --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Savol matni *</label>
+                  <textarea class="form-textarea" id="fq-text" required placeholder="Savol matni..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Rasm URL (ixtiyoriy)</label>
+                  <input type="url" class="form-input" id="fq-image" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Variantlar *</label>
+                  <div id="fq-options-list"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addOption('fq')" style="margin-top:8px">+ Variant qo'shish</button>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">To'g'ri javob(lar) *</label>
+                  <div id="fq-correct-list"></div>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="addCorrect('fq')" style="margin-top:8px">+ To'g'ri javob qo'shish</button>
+                </div>
+                <button class="btn btn-primary" style="align-self:flex-start" onclick="saveSectionQuestion()">
+                  + Final savolni qo'shish
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BULK IMPORT TAB -->
+          <div id="q-tab-bulk-content" style="display:none">
+            <div class="form-card mb-24">
+              <h3>📋 JSON Bulk Import — Dars testi</h3>
+              <p class="text-muted text-sm" style="margin-bottom:8px">
+                Ikkala JSON formatni qo'llab-quvvatlaydi:
+                <b>Format 1</b> — <code>questionText / options / correctAnswers</code> &nbsp;|&nbsp;
+                <b>Format 2</b> — <code>question_text / answers[{option,text,gif}] / correct_answer</code>
+              </p>
+              <!-- Format ko'rsatkichi -->
+              <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+                <span style="background:rgba(99,102,241,.12);color:var(--primary);padding:4px 10px;border-radius:20px;font-size:.78rem;font-weight:600">Format 1: oddiy</span>
+                <span style="background:rgba(16,185,129,.12);color:var(--success);padding:4px 10px;border-radius:20px;font-size:.78rem;font-weight:600">Format 2: JSON fayl (Eng_oxirgi...)</span>
+              </div>
+              <div class="admin-form">
+                <div class="form-group">
+                  <label class="form-label">Dars tanlang *</label>
+                  <select class="form-select" id="bulk-lesson-id">
+                    <option value="">-- Tanlang --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">JSON fayl yuklash <span class="text-muted text-sm">(yoki quyida kiriting)</span></label>
+                  <input type="file" accept=".json" class="form-input" id="bulk-lesson-file" onchange="loadJsonFile('lesson', this)" style="padding:8px;cursor:pointer">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">JSON savollar ro'yxati *</label>
+                  <textarea class="form-textarea" id="bulk-lesson-json" rows="14" placeholder='// ── Format 1 (oddiy) ──────────────────────────────
+[
+  {
+    "questionText": "Java nima?",
+    "imageUrl": null,
+    "options": ["Dasturlash tili", "Kafe", "Qurilma"],
+    "correctAnswers": ["Dasturlash tili"]
+  }
+]
+
+// ── Format 2 (JSON fayl strukturasi) ───────────────
+[
+  {
+    "id": "1.1",
+    "topic_id": "1.9",
+    "question_text": "Savol matni?",
+    "image": "",
+    "answers": [
+      { "option": "A", "text": "Birinchi javob", "gif": "" },
+      { "option": "B", "text": "Ikkinchi javob", "gif": "" }
+    ],
+    "correct_answer": "Birinchi javob"
+  }
+]' style="font-family:monospace;font-size:.82rem"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button class="btn btn-secondary btn-sm" onclick="validateBulkJson('lesson')">🔍 JSON tekshirish</button>
+                  <button class="btn btn-primary" onclick="bulkImport('lesson')">📤 Import qilish</button>
+                </div>
+                <div id="bulk-lesson-result" style="display:none;margin-top:12px"></div>
+              </div>
+            </div>
+
+            <div class="form-card">
+              <h3>📋 JSON Bulk Import — Bo'lim Final Testi</h3>
+              <p class="text-muted text-sm" style="margin-bottom:8px">
+                Ikkala JSON formatni qo'llab-quvvatlaydi:
+                <b>Format 1</b> — <code>questionText / options / correctAnswers</code> &nbsp;|&nbsp;
+                <b>Format 2</b> — <code>question_text / answers[{option,text,gif}] / correct_answer</code>
+              </p>
+              <div class="admin-form">
+                <div class="form-group">
+                  <label class="form-label">Bo'lim tanlang *</label>
+                  <select class="form-select" id="bulk-section-id">
+                    <option value="">-- Tanlang --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">JSON fayl yuklash <span class="text-muted text-sm">(yoki quyida kiriting)</span></label>
+                  <input type="file" accept=".json" class="form-input" id="bulk-section-file" onchange="loadJsonFile('section', this)" style="padding:8px;cursor:pointer">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">JSON savollar ro'yxati *</label>
+                  <textarea class="form-textarea" id="bulk-section-json" rows="14" placeholder='// ── Format 1 (oddiy) ──────────────────────────────
+[
+  {
+    "questionText": "Savol matni...",
+    "options": ["Variant 1", "Variant 2", "Variant 3"],
+    "correctAnswers": ["Variant 1"]
+  }
+]
+
+// ── Format 2 (JSON fayl strukturasi) ───────────────
+[
+  {
+    "id": "1.1",
+    "topic_id": "1.9",
+    "question_text": "Savol matni?",
+    "image": "",
+    "answers": [
+      { "option": "A", "text": "Birinchi javob", "gif": "" },
+      { "option": "B", "text": "Ikkinchi javob", "gif": "" }
+    ],
+    "correct_answer": "Birinchi javob"
+  }
+]' style="font-family:monospace;font-size:.82rem"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button class="btn btn-secondary btn-sm" onclick="validateBulkJson('section')">🔍 JSON tekshirish</button>
+                  <button class="btn btn-primary" onclick="bulkImport('section')">📤 Import qilish</button>
+                </div>
+                <div id="bulk-section-result" style="display:none;margin-top:12px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYMENTS -->
+        <div class="admin-section" id="section-payments">
+          <div class="admin-header">
+            <h2>💳 To'lovlar</h2>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-ghost btn-sm" onclick="loadPayments('pending')" id="btn-pending">⏳ Kutilmoqda</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadPayments('all')" id="btn-all">📋 Hammasi</button>
+            </div>
+          </div>
+          <div id="payments-table">
+            <div style="padding:20px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div class="admin-section" id="section-users">
+          <div class="admin-header">
+            <h2 id="usr-title-uz">Foydalanuvchilar</h2>
+            <h2 id="usr-title-ru" style="display:none">Пользователи</h2>
+          </div>
+          <div class="table-wrap" id="users-table">
+            <div style="padding:20px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const lang = () => localStorage.getItem('lang') || 'uz';
+    const t = (uz, ru) => lang() === 'ru' ? ru : uz;
+    let courseData = null;
+
+    function applyLang() {
+      const isRu = lang() === 'ru';
+      document.querySelectorAll('[id$="-ru"]').forEach(el => el.style.display = isRu ? '' : 'none');
+      document.querySelectorAll('[id$="-uz"]').forEach(el => el.style.display = isRu ? 'none' : '');
+    }
+
+    function showSection(name) {
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(`section-${name}`)?.classList.add('active');
+      event.currentTarget?.classList.add('active');
+
+      if (name === 'dashboard') loadDashboard();
+      else if (name === 'sections') loadSections();
+      else if (name === 'lessons') loadLessons();
+      else if (name === 'questions') loadQuestions();
+      else if (name === 'payments') loadPayments('pending');
+      else if (name === 'users') loadUsers();
+    }
+
+    // DASHBOARD
+    async function loadDashboard() {
+      try {
+        const [course, users] = await Promise.all([
+          Http.get('/api/course/overview'),
+          Http.get('/api/admin/users?page=0&size=5')
+        ]);
+        const totalLessons = course.sections?.reduce((s,sec)=>s+sec.totalLessons,0)||0;
+
+        document.getElementById('dash-stats').innerHTML = `
+          <div class="card text-center"><div style="font-size:2rem;font-family:var(--font-display);font-weight:800;color:var(--accent-bright)">${course.sections?.length||0}</div><div class="text-muted text-sm mt-8">${t('Bo\'limlar','Разделы')}</div></div>
+          <div class="card text-center"><div style="font-size:2rem;font-family:var(--font-display);font-weight:800;color:var(--teal)">${totalLessons}</div><div class="text-muted text-sm mt-8">${t('Darslar','Уроки')}</div></div>
+          <div class="card text-center"><div style="font-size:2rem;font-family:var(--font-display);font-weight:800;color:var(--success)">${users.totalElements||0}</div><div class="text-muted text-sm mt-8">${t('Foydalanuvchilar','Пользователи')}</div></div>
+          <div class="card text-center"><div style="font-size:2rem;font-family:var(--font-display);font-weight:800;color:var(--warning)">80%</div><div class="text-muted text-sm mt-8">${t('O\'tish bali','Проходной балл')}</div></div>
+        `;
+
+        document.getElementById('recent-users-table').innerHTML = `
+          <table>
+            <thead><tr>
+              <th>ID</th><th>${t('Ism','Имя')}</th><th>${t('Telefon','Телефон')}</th>
+              <th>${t('Rol','Роль')}</th><th>${t('Sana','Дата')}</th>
+            </tr></thead>
+            <tbody>
+              ${(users.content||[]).map(u => `
+              <tr>
+                <td><span class="badge badge-gray">#${u.id}</span></td>
+                <td><b>${u.fullName}</b></td>
+                <td class="text-muted">${u.phoneNumber}</td>
+                <td><span class="badge ${u.role==='ADMIN'?'badge-yellow':'badge-blue'}">${u.role}</span></td>
+                <td class="text-muted text-sm">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch(e) { Toast.error(e.message); }
+    }
+
+    // COURSE
+    async function saveCourse(e) {
+      e.preventDefault();
+      try {
+        await Http.post('/api/admin/course', {
+          title: document.getElementById('course-title').value,
+          description: document.getElementById('course-desc').value,
+          thumbnailUrl: document.getElementById('course-thumb').value || null
+        });
+        Toast.success(t('Kurs saqlandi! ✅', 'Курс сохранён! ✅'));
+      } catch(err) { Toast.error(err.message); }
+    }
+
+    // SECTIONS
+    async function loadSections() {
+      const list = document.getElementById('sections-list');
+      try {
+        const course = await Http.get('/api/course/overview');
+        courseData = course;
+        if (!course.sections?.length) {
+          list.innerHTML = `<p class="text-muted" style="padding:20px">${t('Hali bo\'lim yo\'q','Разделов пока нет')}</p>`; return;
+        }
+        list.innerHTML = course.sections.map(sec => `
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAcc('acc-${sec.id}')">
+              <span style="font-size:1.1rem">📂</span>
+              <span class="accordion-title">${sec.orderIndex}. ${sec.title}</span>
+              <span class="accordion-meta">${sec.totalLessons} ${t('dars','урок')}</span>
+              <span class="badge ${sec.finalTestPassed?'badge-green':'badge-gray'} ml-8">${sec.finalTestPassed?'✅':'○'} ${t('Final','Финал')}</span>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();confirmDelete('sec',${sec.id},'${sec.title}')">🗑</button>
+            </div>
+            <div class="accordion-body" id="acc-${sec.id}">
+              <p class="text-muted text-sm" style="margin-top:12px">${sec.description || ''}</p>
+            </div>
+          </div>`).join('');
+      } catch(e) { list.innerHTML = `<p style="color:var(--danger);padding:20px">⚠️ ${e.message}</p>`; }
+    }
+
+    function openAddSection() {
+      const form = document.getElementById('add-section-form');
+      form.style.display = form.style.display === 'none' ? '' : 'none';
+    }
+
+    async function saveSection(e) {
+      e.preventDefault();
+      try {
+        const course = await Http.get('/api/course/overview');
+        await Http.post('/api/admin/sections', {
+          title: document.getElementById('sec-title-inp').value,
+          description: document.getElementById('sec-desc').value || null,
+          orderIndex: parseInt(document.getElementById('sec-order').value),
+          courseId: course.id
+        });
+        Toast.success(t('Bo\'lim qo\'shildi! ✅', 'Раздел добавлен! ✅'));
+        document.getElementById('add-section-form').style.display = 'none';
+        e.target.reset();
+        loadSections();
+      } catch(err) { Toast.error(err.message); }
+    }
+
+    // LESSONS
+    async function loadLessons() {
+      const list = document.getElementById('lessons-list');
+      try {
+        const course = await Http.get('/api/course/overview');
+        courseData = course;
+        populateSectionDropdowns(course);
+        if (!course.sections?.length) { list.innerHTML = `<p class="text-muted" style="padding:20px">${t('Hali dars yo\'q','Уроков пока нет')}</p>`; return; }
+
+        list.innerHTML = course.sections.map(sec => `
+          <div style="margin-bottom:24px">
+            <h4 style="font-family:var(--font-display);margin-bottom:12px;color:var(--text-2)">📂 ${sec.title}</h4>
+            ${!sec.lessons.length
+              ? `<p class="text-muted text-sm">${t('Bu bo\'limda dars yo\'q','В этом разделе нет уроков')}</p>`
+              : `<div class="table-wrap">
+                <table>
+                  <thead><tr><th>#</th><th>${t('Sarlavha','Название')}</th><th>URL / Videolar</th><th>${t('Bepul','Бесплатно')}</th><th>Q</th><th></th></tr></thead>
+                  <tbody>
+                    ${sec.lessons.map(les => `
+                    <tr>
+                      <td>${les.orderIndex}</td>
+                      <td><b>${les.title}</b>${les.description?`<div class="text-muted text-sm">${les.description}</div>`:''}</td>
+                      <td style="max-width:160px" class="text-muted text-sm">
+                        ${les.videoUrls && les.videoUrls.length > 1
+                          ? `<span class="badge badge-blue">🎬 ${les.videoUrls.length} ta video</span>`
+                          : `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${les.videoUrl||'—'}</span>`
+                        }
+                      </td>
+                      <td>${les.isFree?'<span class="badge badge-green">✓</span>':'<span class="badge badge-gray">✗</span>'}</td>
+                      <td><span class="badge badge-blue">${les.totalQuestions}</span></td>
+                      <td><button class="btn btn-danger btn-sm" onclick="confirmDelete('les',${les.id},'${les.title}')">🗑</button></td>
+                    </tr>`).join('')}
+                  </tbody>
+                </table>
+               </div>`}
+          </div>`).join('');
+      } catch(e) { list.innerHTML = `<p style="color:var(--danger);padding:20px">⚠️ ${e.message}</p>`; }
+    }
+
+    function openAddLesson() {
+      const form = document.getElementById('add-lesson-form');
+      form.style.display = form.style.display === 'none' ? '' : 'none';
+    }
+
+    // ── MULTI-VIDEO MANAGEMENT ───────────────────────────────────
+    let videoInputCount = 1;
+
+    function addVideoInput() {
+      videoInputCount++;
+      const idx = videoInputCount - 1;
+      const container = document.getElementById('video-inputs-container');
+      const div = document.createElement('div');
+      div.className = 'video-input-row';
+      div.dataset.index = idx;
+      div.style.cssText = 'border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--bg-2)';
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:.78rem;font-weight:700;color:var(--teal)">📹 Video ${idx + 1}</span>
+          <button type="button" onclick="removeVideoInput(this)" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:.9rem;padding:2px 6px" title="O'chirish">✕</button>
+        </div>
+        <input type="text" class="form-input video-url-input" placeholder="https://www.youtube.com/embed/xxxxx" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:var(--accent-dim);color:var(--accent-bright);border:1px solid var(--border-bright);border-radius:var(--radius-sm);cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background='var(--accent-dim)'">
+            ☁️ <span>Cloudinary ga yukla</span>
+            <input type="file" accept="video/*" style="display:none" onchange="uploadLessonVideoExtra(this)">
+          </label>
+          <span style="font-size:.75rem;color:var(--text-3)">MP4, MOV, AVI · max 500MB</span>
+        </div>
+        <div class="extra-video-progress" style="display:none;margin-top:8px">
+          <div style="height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden;margin-bottom:4px">
+            <div class="extra-video-progress-fill" style="height:100%;background:var(--teal);border-radius:3px;width:0%;transition:width .3s"></div>
+          </div>
+          <div class="extra-video-progress-text" style="font-size:.78rem;color:var(--text-2)">Yuklanmoqda...</div>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeVideoInput(btn) {
+      btn.closest('.video-input-row').remove();
+    }
+
+    async function uploadLessonVideoExtra(input) {
+      const row = input.closest('.video-input-row');
+      const urlInput = row.querySelector('.video-url-input');
+      const progressWrap = row.querySelector('.extra-video-progress');
+      const progressFill = row.querySelector('.extra-video-progress-fill');
+      const progressText = row.querySelector('.extra-video-progress-text');
+      const label = input.parentElement;
+      const file = input.files[0];
+      if (!file) return;
+      label.innerHTML = '⏳ <span>Yuklanmoqda...</span>';
+      label.style.pointerEvents = 'none';
+      progressWrap.style.display = '';
+      progressFill.style.width = '0%';
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('resource_type', 'video');
+      try {
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = e => {
+            if (e.lengthComputable) {
+              const pct = Math.round(e.loaded / e.total * 100);
+              progressFill.style.width = pct + '%';
+              progressText.textContent = `Yuklanmoqda... ${pct}%`;
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              const res = JSON.parse(xhr.responseText);
+              urlInput.value = res.secure_url;
+              progressText.textContent = '✅ Yuklandi!';
+              progressFill.style.width = '100%';
+              label.innerHTML = '✅ <span>Yuklandi!</span>';
+              resolve();
+            } else reject(new Error('Yuklash xatosi'));
+          };
+          xhr.onerror = () => reject(new Error('Tarmoq xatosi'));
+          xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`);
+          xhr.send(formData);
+        });
+      } catch(err) {
+        label.innerHTML = '❌ <span>Xato</span>';
+        progressText.textContent = '❌ ' + err.message;
+      } finally {
+        label.style.pointerEvents = '';
+      }
+    }
+
+    // ── CLOUDINARY VIDEO UPLOAD ──────────────────────────────────
+    const CLOUDINARY_CLOUD = 'dnv9ctnyk';
+    const CLOUDINARY_PRESET = 'unsigned_shop_upload';
+
+    async function uploadLessonVideo(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const label = document.getElementById('les-video-upload-label');
+      const progressWrap = document.getElementById('les-video-progress');
+      const progressFill = document.getElementById('les-video-progress-fill');
+      const progressText = document.getElementById('les-video-progress-text');
+      const videoInput   = document.getElementById('les-video');
+
+      label.innerHTML = '⏳ <span>Yuklanmoqda...</span>';
+      label.style.pointerEvents = 'none';
+      progressWrap.style.display = '';
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Yuklash boshlandi...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('resource_type', 'video');
+
+      try {
+        // XMLHttpRequest ishlatamiz — progress kuzatish uchun
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`);
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round(e.loaded / e.total * 100);
+              progressFill.style.width = pct + '%';
+              progressText.textContent = `Yuklanmoqda... ${pct}% (${(e.loaded/1024/1024).toFixed(1)} / ${(e.total/1024/1024).toFixed(1)} MB)`;
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const data = JSON.parse(xhr.responseText);
+              if (data.secure_url) {
+                videoInput.value = data.secure_url;
+                label.innerHTML = '✅ <span>Video yuklandi!</span>';
+                label.style.background = 'rgba(16,185,129,.12)';
+                label.style.color = 'var(--success)';
+                label.style.borderColor = 'rgba(16,185,129,.3)';
+                progressFill.style.width = '100%';
+                progressFill.style.background = 'var(--success)';
+                progressText.textContent = '✅ Muvaffaqiyatli yuklandi: ' + data.original_filename;
+                Toast.success('Video Cloudinary ga yuklandi! ✅');
+                resolve(data);
+              } else {
+                reject(new Error('URL topilmadi'));
+              }
+            } else {
+              const err = JSON.parse(xhr.responseText || '{}');
+              reject(new Error(err.error?.message || `Xato: ${xhr.status}`));
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error('Tarmoq xatosi')));
+          xhr.addEventListener('abort', () => reject(new Error('Bekor qilindi')));
+
+          xhr.send(formData);
+        });
+
+      } catch(error) {
+        console.error('Cloudinary video xatosi:', error);
+        Toast.error('Video yuklanmadi: ' + error.message);
+        label.innerHTML = '❌ <span>Xato — qayta tanlang</span>';
+        label.style.color = 'var(--danger)';
+        label.style.pointerEvents = '';
+        progressText.textContent = '❌ Xato: ' + error.message;
+        progressFill.style.background = 'var(--danger)';
+        // Reset file input
+        input.value = '';
+      } finally {
+        // Re-enable after 2s if not success
+        setTimeout(() => {
+          if (label.innerHTML.includes('Xato') || label.innerHTML.includes('❌')) {
+            label.innerHTML = '☁️ <span>Cloudinary ga video yukla</span>';
+            label.style.background = 'var(--accent-dim)';
+            label.style.color = 'var(--accent-bright)';
+            label.style.borderColor = 'var(--border-bright)';
+            label.style.pointerEvents = '';
+          }
+        }, 3000);
+      }
+    }
+
+        async function saveLesson(e) {
+      e.preventDefault();
+      // Barcha video URL larni yig'ish
+      const videoInputs = document.querySelectorAll('.video-url-input');
+      const allUrls = Array.from(videoInputs).map(inp => inp.value.trim()).filter(v => v);
+      if (!allUrls.length) { Toast.error('Kamida 1 ta video URL kiriting!'); return; }
+      const mainVideoUrl = allUrls[0];
+      const extraUrls = allUrls.length > 1 ? allUrls : null;
+      try {
+        await Http.post('/api/admin/lessons', {
+          title: document.getElementById('les-title-inp').value,
+          description: document.getElementById('les-desc').value || null,
+          videoUrl: mainVideoUrl,
+          videoUrls: extraUrls,
+          orderIndex: parseInt(document.getElementById('les-order').value),
+          durationMinutes: document.getElementById('les-duration').value ? parseInt(document.getElementById('les-duration').value) : null,
+          free: document.getElementById('les-free').checked,
+          sectionId: parseInt(document.getElementById('les-section-id').value)
+        });
+        Toast.success(t('Dars qo\'shildi! ✅', 'Урок добавлен! ✅'));
+        document.getElementById('add-lesson-form').style.display = 'none';
+        e.target.reset();
+        // Video inputlarni tozalash (faqat birinchisi qolsin)
+        const container = document.getElementById('video-inputs-container');
+        const rows = container.querySelectorAll('.video-input-row');
+        rows.forEach((row, i) => { if (i > 0) row.remove(); });
+        loadLessons();
+      } catch(err) { Toast.error(err.message); }
+    }
+
+    async function loadQuestions() {
+      try {
+        const course = await Http.get('/api/course/overview');
+        courseData = course;
+        populateSectionDropdowns(course);
+        populateLessonDropdowns(course);
+        initDefaultOptions();
+      } catch(e) { Toast.error(e.message); }
+    }
+
+    function populateSectionDropdowns(course) {
+      const opts = course.sections?.map(s => `<option value="${s.id}">${s.orderIndex}. ${s.title}</option>`).join('') || '';
+      ['les-section-id','fq-section-id','bulk-section-id'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<option value="">-- Tanlang --</option>` + opts;
+      });
+    }
+
+    function populateLessonDropdowns(course) {
+      const opts = course.sections?.flatMap(s => s.lessons.map(l =>
+        `<option value="${l.id}">${s.orderIndex}.${l.orderIndex} - ${l.title}</option>`)).join('') || '';
+      ['q-lesson-id','bulk-lesson-id'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<option value="">-- Tanlang --</option>` + opts;
+      });
+    }
+
+    // ====== DYNAMIC OPTIONS ======
+    function addOption(prefix) {
+      const list = document.getElementById(`${prefix}-options-list`);
+      const idx = list.children.length;
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
+      div.innerHTML = `
+        <span style="min-width:24px;text-align:center;font-weight:700;color:var(--accent)">${String.fromCharCode(65+idx)}</span>
+        <input type="text" class="form-input" placeholder="Variant ${String.fromCharCode(65+idx)}" style="flex:1">
+        <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 8px;color:var(--danger)" onclick="this.parentElement.remove();reindexOptions('${prefix}')">✕</button>
+      `;
+      list.appendChild(div);
+    }
+
+    function reindexOptions(prefix) {
+      const list = document.getElementById(`${prefix}-options-list`);
+      Array.from(list.children).forEach((div, i) => {
+        const label = div.querySelector('span');
+        const inp = div.querySelector('input');
+        if (label) label.textContent = String.fromCharCode(65+i);
+        if (inp) inp.placeholder = `Variant ${String.fromCharCode(65+i)}`;
+      });
+    }
+
+    function addCorrect(prefix) {
+      const list = document.getElementById(`${prefix}-correct-list`);
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
+      div.innerHTML = `
+        <input type="text" class="form-input" placeholder="Variant matni (aynan)" style="flex:1">
+        <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 8px;color:var(--danger)" onclick="this.parentElement.remove()">✕</button>
+      `;
+      list.appendChild(div);
+    }
+
+    function getOptions(prefix) {
+      return Array.from(document.getElementById(`${prefix}-options-list`).querySelectorAll('input'))
+        .map(i => i.value.trim()).filter(Boolean);
+    }
+
+    function getCorrects(prefix) {
+      return Array.from(document.getElementById(`${prefix}-correct-list`).querySelectorAll('input'))
+        .map(i => i.value.trim()).filter(Boolean);
+    }
+
+    function showQTab(tab) {
+      document.getElementById('q-tab-single-content').style.display = tab==='single' ? '' : 'none';
+      document.getElementById('q-tab-bulk-content').style.display = tab==='bulk' ? '' : 'none';
+      document.getElementById('q-tab-single').className = tab==='single' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+      document.getElementById('q-tab-bulk').className = tab==='bulk' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    }
+
+    // init 2 options on load
+    function initDefaultOptions() {
+      ['q','fq'].forEach(p => {
+        if (document.getElementById(`${p}-options-list`)?.children.length === 0) {
+          addOption(p); addOption(p);
+          addCorrect(p);
+        }
+      });
+    }
+
+    async function saveLessonQuestion() {
+      const lessonId = parseInt(document.getElementById('q-lesson-id').value);
+      if (!lessonId) { Toast.error('Dars tanlang!'); return; }
+      const questionText = document.getElementById('q-text').value.trim();
+      if (!questionText) { Toast.error('Savol matni kiritng!'); return; }
+      const options = getOptions('q');
+      const correctAnswers = getCorrects('q');
+      if (options.length < 2) { Toast.error('Kamida 2 ta variant kerak!'); return; }
+      if (!correctAnswers.length) { Toast.error('Kamida 1 ta to\'g\'ri javob kerak!'); return; }
+      try {
+        await Http.post('/api/admin/lesson-questions', {
+          lessonId, questionText,
+          imageUrl: document.getElementById('q-image').value.trim() || null,
+          options, correctAnswers
+        });
+        Toast.success('Savol qo\'shildi! ✅');
+        document.getElementById('q-text').value = '';
+        document.getElementById('q-image').value = '';
+        document.getElementById('q-options-list').innerHTML = '';
+        document.getElementById('q-correct-list').innerHTML = '';
+        addOption('q'); addOption('q'); addCorrect('q');
+      } catch(err) { Toast.error(err.message); }
+    }
+
+    async function saveSectionQuestion() {
+      const sectionId = parseInt(document.getElementById('fq-section-id').value);
+      if (!sectionId) { Toast.error('Bo\'lim tanlang!'); return; }
+      const questionText = document.getElementById('fq-text').value.trim();
+      if (!questionText) { Toast.error('Savol matni kiriting!'); return; }
+      const options = getOptions('fq');
+      const correctAnswers = getCorrects('fq');
+      if (options.length < 2) { Toast.error('Kamida 2 ta variant kerak!'); return; }
+      if (!correctAnswers.length) { Toast.error('Kamida 1 ta to\'g\'ri javob kerak!'); return; }
+      try {
+        await Http.post('/api/admin/section-final-questions', {
+          sectionId, questionText,
+          imageUrl: document.getElementById('fq-image').value.trim() || null,
+          options, correctAnswers
+        });
+        Toast.success('Final savol qo\'shildi! ✅');
+        document.getElementById('fq-text').value = '';
+        document.getElementById('fq-image').value = '';
+        document.getElementById('fq-options-list').innerHTML = '';
+        document.getElementById('fq-correct-list').innerHTML = '';
+        addOption('fq'); addOption('fq'); addCorrect('fq');
+      } catch(err) { Toast.error(err.message); }
+    }
+
+    // ====== JSON FAYL YUKLASH ======
+    // Ikkala formatni aniqlaydi:
+    //   Format 1: [ { questionText, options[], correctAnswers[] } ]
+    //   Format 2: { "questions": [ { question_text, answers[], correct_answer } ] }
+    //          yoki bevosita massiv: [ { question_text, answers[], correct_answer } ]
+    function detectJsonFormat(data) {
+      // Root object bo'lsa va "questions" kaliti bo'lsa → Format 2 wrapper
+      if (!Array.isArray(data) && data.questions && Array.isArray(data.questions)) {
+        return { format: 2, arr: data.questions };
+      }
+      const arr = Array.isArray(data) ? data : null;
+      if (!arr || !arr.length) return { format: 0, arr: [] };
+      const first = arr[0];
+      // Format 2: answers[] va question_text mavjud
+      if (first.answers && Array.isArray(first.answers) && first.question_text !== undefined) {
+        return { format: 2, arr };
+      }
+      // Format 1: questionText yoki options mavjud
+      return { format: 1, arr };
+    }
+
+    // Format 2 → Format 1 ga o'girish (backend @NotBlank/@NotEmpty validatsiyasi uchun)
+    function normalizeToFormat1(q) {
+      const options = (q.answers || [])
+        .map(a => a.text)
+        .filter(t => t && t.trim());
+      return {
+        questionText: q.question_text || '',
+        imageUrl: (q.image && q.image.trim()) ? q.image.trim() : null,
+        options: options,
+        correctAnswers: q.correct_answer ? [q.correct_answer] : []
+      };
+    }
+
+    function loadJsonFile(type, input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (!file.name.endsWith('.json')) { Toast.error('Faqat .json fayl!'); input.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const targetId = type === 'lesson' ? 'bulk-lesson-json' : 'bulk-section-json';
+        const resultId = `bulk-${type==='lesson'?'lesson':'section'}-result`;
+        const resultEl = document.getElementById(resultId);
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const { format, arr } = detectJsonFormat(parsed);
+          if (!arr.length) throw new Error('Savollar topilmadi');
+
+          // Textarea'ga to'liq JSON yozamiz (massiv ko'rinishida)
+          document.getElementById(targetId).value = JSON.stringify(arr, null, 2);
+
+          const fmtLabel = format === 2
+            ? '<span style="color:var(--success)">Format 2 (JSON fayl)</span>'
+            : '<span style="color:var(--primary)">Format 1 (oddiy)</span>';
+          resultEl.style.display = '';
+          resultEl.innerHTML = `<div style="color:var(--success);background:rgba(16,185,129,.1);padding:12px;border-radius:var(--radius-sm);font-size:.85rem">
+            ✅ Fayl yuklandi! ${arr.length} ta savol topildi — "${file.name}" &nbsp;|&nbsp; ${fmtLabel}
+          </div>`;
+        } catch(err) {
+          resultEl.style.display = '';
+          resultEl.innerHTML = `<div style="color:var(--danger);background:var(--danger-dim);padding:12px;border-radius:var(--radius-sm);font-size:.85rem">❌ JSON xato: ${err.message}</div>`;
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ====== BULK IMPORT ======
+    function validateBulkJson(type) {
+      const raw = document.getElementById(type==='lesson' ? 'bulk-lesson-json' : 'bulk-section-json').value.trim();
+      const resultEl = document.getElementById(`bulk-${type==='lesson'?'lesson':'section'}-result`);
+      try {
+        const parsed = JSON.parse(raw);
+        const { format, arr } = detectJsonFormat(parsed);
+        if (!arr.length) throw new Error('Savollar topilmadi');
+        let errs = [];
+
+        if (format === 2) {
+          // Format 2 tekshiruv
+          arr.forEach((q, i) => {
+            if (!q.question_text || !q.question_text.trim()) errs.push(`#${i+1}: question_text yo'q`);
+            if (!Array.isArray(q.answers) || q.answers.length < 2) errs.push(`#${i+1}: answers kamida 2 ta bo'lishi kerak`);
+            if (!q.correct_answer || !q.correct_answer.trim()) errs.push(`#${i+1}: correct_answer yo'q`);
+            else if (q.answers && !q.answers.some(a => a.text === q.correct_answer))
+              errs.push(`#${i+1}: correct_answer answers ichida topilmadi`);
+          });
+        } else {
+          // Format 1 tekshiruv
+          arr.forEach((q, i) => {
+            if (!q.questionText) errs.push(`#${i+1}: questionText yo'q`);
+            if (!Array.isArray(q.options) || q.options.length < 2) errs.push(`#${i+1}: options kamida 2 ta bo'lishi kerak`);
+            if (!Array.isArray(q.correctAnswers) || !q.correctAnswers.length) errs.push(`#${i+1}: correctAnswers bo'sh`);
+          });
+        }
+
+        const fmtLabel = format === 2
+          ? '<span style="color:var(--success)">Format 2 (JSON fayl)</span>'
+          : '<span style="color:var(--primary)">Format 1 (oddiy)</span>';
+
+        if (errs.length) {
+          resultEl.style.display = '';
+          resultEl.innerHTML = `<div style="color:var(--danger);background:var(--danger-dim);padding:12px;border-radius:var(--radius-sm);font-size:.85rem"><b>Xatoliklar (${fmtLabel}):</b><br>${errs.join('<br>')}</div>`;
+        } else {
+          resultEl.style.display = '';
+          resultEl.innerHTML = `<div style="color:var(--success);background:rgba(16,185,129,.1);padding:12px;border-radius:var(--radius-sm);font-size:.85rem">✅ JSON to'g'ri! ${arr.length} ta savol topildi. ${fmtLabel}</div>`;
+        }
+      } catch(e) {
+        resultEl.style.display = '';
+        resultEl.innerHTML = `<div style="color:var(--danger);background:var(--danger-dim);padding:12px;border-radius:var(--radius-sm);font-size:.85rem">❌ JSON xato: ${e.message}</div>`;
+      }
+    }
+
+    async function bulkImport(type) {
+      const isLesson = type === 'lesson';
+      const rawEl = document.getElementById(isLesson ? 'bulk-lesson-json' : 'bulk-section-json');
+      const idEl  = document.getElementById(isLesson ? 'bulk-lesson-id' : 'bulk-section-id');
+      const resultEl = document.getElementById(`bulk-${isLesson?'lesson':'section'}-result`);
+      const id = parseInt(idEl.value);
+      if (!id) { Toast.error(isLesson ? 'Dars tanlang!' : 'Bo\'lim tanlang!'); return; }
+      let parsed;
+      try { parsed = JSON.parse(rawEl.value.trim()); }
+      catch(e) { Toast.error('JSON xato: ' + e.message); return; }
+
+      const { format, arr } = detectJsonFormat(parsed);
+      if (!arr || !arr.length) { Toast.error('Bo\'sh massiv!'); return; }
+
+      // Format 2 ni Format 1 ga o'giramiz (Spring @NotBlank/@NotEmpty o'tishi uchun)
+      const questions = format === 2 ? arr.map(normalizeToFormat1) : arr;
+
+      try {
+        const body = isLesson
+          ? { lessonId: id, questions }
+          : { sectionId: id, questions };
+        const url = isLesson ? '/api/admin/lesson-questions/bulk' : '/api/admin/section-final-questions/bulk';
+        const res = await Http.post(url, body);
+        resultEl.style.display = '';
+        resultEl.innerHTML = `<div style="color:var(--success);background:rgba(16,185,129,.1);padding:12px;border-radius:var(--radius-sm)">🎉 ${res.message || res.imported + ' ta savol import qilindi!'}</div>`;
+        Toast.success(`${res.imported || arr.length} ta savol qo'shildi!`);
+        rawEl.value = '';
+      } catch(err) {
+        resultEl.style.display = '';
+        resultEl.innerHTML = `<div style="color:var(--danger);background:var(--danger-dim);padding:12px;border-radius:var(--radius-sm)">❌ ${err.message}</div>`;
+        Toast.error(err.message);
+      }
+    }
+
+    // PAYMENTS
+    async function loadPayments(status = 'pending') {
+      const table = document.getElementById('payments-table');
+      if (!table) return;
+      table.innerHTML = '<div style="padding:20px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await Http.get('/api/admin/payments?status=' + status);
+        const payments = Array.isArray(data) ? data : [];
+        if (!payments.length) {
+          table.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-2)">To\'lovlar yo\'q</div>';
+          return;
+        }
+        table.innerHTML = `<table>
+          <thead><tr>
+            <th>#</th><th>Foydalanuvchi</th><th>Miqdor</th>
+            <th>Holat</th><th>Sana</th><th>Amallar</th>
+          </tr></thead>
+          <tbody>
+            ${payments.map(p => `<tr>
+              <td>#${p.id}</td>
+              <td>
+                <div style="font-weight:600">${p.userFullName}</div>
+                <div style="font-size:.8rem;color:var(--text-2)">${p.userPhoneNumber}</div>
+                ${p.telegramId ? `<div style="font-size:.78rem;color:var(--teal)">TG: ${p.telegramId}</div>` : ''}
+              </td>
+              <td><b>${(p.amount||0).toLocaleString()} so'm</b></td>
+              <td>
+                <span style="padding:4px 10px;border-radius:20px;font-size:.8rem;font-weight:600;
+                  background:${p.status==='APPROVED'?'rgba(16,185,129,.15)':p.status==='REJECTED'?'rgba(239,68,68,.15)':'rgba(245,158,11,.15)'};
+                  color:${p.status==='APPROVED'?'var(--success)':p.status==='REJECTED'?'var(--danger)':'var(--warning)'}">
+                  ${p.status==='APPROVED'?'✅ Tasdiqlandi':p.status==='REJECTED'?'❌ Rad etildi':'⏳ Kutilmoqda'}
+                </span>
+              </td>
+              <td style="font-size:.82rem;color:var(--text-2)">${p.createdAt ? new Date(p.createdAt).toLocaleDateString('uz') : '—'}</td>
+              <td>
+                ${p.status==='PENDING' ? `
+                  <div style="display:flex;gap:6px">
+                    ${p.receiptFileId ? `<button class="btn btn-ghost btn-sm" onclick="viewReceipt('${p.receiptFileId}')">🖼 Chek</button>` : ''}
+                    <button class="btn btn-success btn-sm" onclick="reviewPayment(${p.id}, true)">✅</button>
+                    <button class="btn btn-danger btn-sm" onclick="reviewPayment(${p.id}, false)">❌</button>
+                  </div>` : p.receiptFileId ? `<button class="btn btn-ghost btn-sm" onclick="viewReceipt('${p.receiptFileId}')">🖼 Chek</button>` : '—'}
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+      } catch(e) { table.innerHTML = `<div style="padding:20px;color:var(--danger)">⚠️ ${e.message}</div>`; }
+    }
+
+    async function reviewPayment(id, approve) {
+      const action = approve ? '✅ Tasdiqlash' : '❌ Rad etish';
+      if (!confirm(action + ' #' + id + '?')) return;
+      try {
+        await Http.patch(`/api/admin/payments/${id}/review`, { approve });
+        Toast.success(approve ? 'Premium berildi ✅' : 'Rad etildi ❌');
+        loadPayments('pending');
+      } catch(e) { Toast.error(e.message); }
+    }
+
+    function viewReceipt(fileId) {
+      // Telegram file_id — to'g'ridan brauzerda ko'rsatib bo'lmaydi
+      // Admin bot orqali ko'radi (/pending buyrug'i)
+      Toast.info('Chekni ko\'rish uchun Telegram botdagi /pending buyrug\'ni ishlating');
+    }
+
+    // USERS
+    async function loadUsers() {
+      const table = document.getElementById('users-table');
+      try {
+        const data = await Http.get('/api/admin/users?page=0&size=50');
+        const users = data.content || [];
+        table.innerHTML = `
+          <table>
+            <thead><tr>
+              <th>ID</th><th>${t('Ism','Имя')}</th><th>${t('Telefon','Телефон')}</th>
+              <th>${t('Rol','Роль')}</th><th>${t('Holat','Статус')}</th>
+              <th>${t('Sana','Дата')}</th><th>${t('Amallar','Действия')}</th>
+            </tr></thead>
+            <tbody>
+              ${users.map(u => `
+              <tr>
+                <td><span class="badge badge-gray">#${u.id}</span></td>
+                <td><b>${u.fullName}</b></td>
+                <td class="text-muted text-sm">${u.phoneNumber}</td>
+                <td><span class="badge ${u.role==='ADMIN'?'badge-yellow':'badge-blue'}">${u.role}</span></td>
+                <td><span class="badge ${u.active!==false?'badge-green':'badge-red'}">${u.active!==false?t('Faol','Активен'):t('Bloklangan','Заблокирован')}</span></td>
+                <td class="text-muted text-sm">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="btn btn-secondary btn-sm" onclick="toggleUser(${u.id})" title="${t('Bloklash/ochish','Блок/разблок')}">🔒</button>
+                    ${u.role !== 'ADMIN' ? `<button class="btn btn-warning btn-sm" style="background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid rgba(245,158,11,0.3)" onclick="makeAdmin(${u.id})" title="${t('Admin qilish','Сделать админом')}">⭐</button>` : ''}
+                  </div>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch(e) { table.innerHTML = `<p style="color:var(--danger);padding:20px">⚠️ ${e.message}</p>`; }
+    }
+
+    async function toggleUser(userId) {
+      try {
+        await Http.patch(`/api/admin/users/${userId}/toggle-active`, {});
+        Toast.success(t('Foydalanuvchi holati o\'zgartirildi', 'Статус пользователя изменён'));
+        loadUsers();
+      } catch(e) { Toast.error(e.message); }
+    }
+
+    async function makeAdmin(userId) {
+      try {
+        await Http.patch(`/api/admin/users/${userId}/make-admin`, {});
+        Toast.success(t('Foydalanuvchi Admin qilindi ⭐', 'Пользователь назначен администратором ⭐'));
+        loadUsers();
+      } catch(e) { Toast.error(e.message); }
+    }
+
+    // DELETE
+    let pendingDelete = null;
+    function confirmDelete(type, id, name) {
+      pendingDelete = { type, id };
+      document.getElementById('confirm-desc').textContent = `"${name}"`;
+      openModal('confirm-modal');
+      document.getElementById('confirm-ok-btn').onclick = async () => {
+        closeModal('confirm-modal');
+        await doDelete(type, id);
+      };
+    }
+
+    async function doDelete(type, id) {
+      try {
+        if (type === 'sec') await Http.delete(`/api/admin/sections/${id}`);
+        else if (type === 'les') await Http.delete(`/api/admin/lessons/${id}`);
+        Toast.success(t('O\'chirildi ✅', 'Удалено ✅'));
+        if (type === 'sec') loadSections();
+        else if (type === 'les') loadLessons();
+      } catch(e) { Toast.error(e.message); }
+    }
+
+    function toggleAcc(id) {
+      document.getElementById(id)?.classList.toggle('open');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!requireAuth(true)) return;
+      applyLang();
+      loadDashboard();
+
+      const origSet = I18N.set.bind(I18N);
+      I18N.set = function(l) { origSet(l); applyLang(); };
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ro'yxatdan o'tish — EduPlatform</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+    .auth-left {
+      background: var(--bg-1); position: relative; overflow: hidden;
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: center; padding: 60px;
+    }
+    .auth-glow {
+      position: absolute; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(14,165,233,0.2) 0%, transparent 70%);
+      bottom: -100px; right: -100px;
+    }
+    .auth-left-content { position: relative; z-index: 1; text-align: center; }
+    .auth-logo {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-bright), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 48px; display: block;
+    }
+    .auth-illustration { font-size: 6rem; margin-bottom: 32px; filter: drop-shadow(0 0 30px rgba(14,165,233,0.4)); }
+    .step-list { display: flex; flex-direction: column; gap: 20px; margin-top: 40px; text-align: left; }
+    .step-item { display: flex; align-items: center; gap: 16px; }
+    .step-circle {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--teal));
+      font-family: var(--font-display); font-weight: 700; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-item-text { font-size: 0.9rem; color: var(--text-2); }
+
+    .auth-right { background: var(--bg-0); display: flex; align-items: center; justify-content: center; padding: 60px 40px; }
+    .auth-form-box { width: 100%; max-width: 420px; }
+    .auth-form { display: flex; flex-direction: column; gap: 18px; }
+    .input-icon-wrap { position: relative; }
+    .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+    .input-icon-wrap .form-input { padding-left: 42px; }
+    .password-wrap { position: relative; }
+    .password-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 1rem; }
+    .submit-btn { width: 100%; padding: 13px; font-size: 1rem; justify-content: center; margin-top: 8px; }
+    .error-msg { display: none; background: var(--danger-dim); border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 0.88rem; color: #f87171; }
+    .error-msg.show { display: block; }
+    .password-strength { height: 4px; background: var(--bg-3); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+    .strength-fill { height: 100%; border-radius: 99px; transition: all .3s; width: 0; }
+    .auth-footer-link { text-align: center; font-size: 0.9rem; color: var(--text-2); }
+    .auth-footer-link a { color: var(--accent-bright); font-weight: 600; }
+    @media (max-width: 768px) { .auth-page { grid-template-columns: 1fr; } .auth-left { display: none; } .auth-right { padding: 40px 20px; } }
+  </style>
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div class="auth-page">
+    <!-- LEFT -->
+    <div class="auth-left">
+      <div class="auth-glow"></div>
+      <div class="auth-left-content">
+        <a href="/" class="auth-logo">EduPlatform</a>
+        <div class="auth-illustration">🎓</div>
+        <h2 id="left-uz">Bugun boshlang!</h2>
+        <h2 id="left-ru" style="display:none">Начните сегодня!</h2>
+        <p class="text-muted" id="lsub-uz">Bilimingizni test orqali sinab ko'ring</p>
+        <p class="text-muted" id="lsub-ru" style="display:none">Проверьте свои знания через тестирование</p>
+        <div class="step-list">
+          <div class="step-item"><div class="step-circle">1</div><span class="step-item-text" id="s1-uz">Bepul hisob yarating</span><span class="step-item-text" id="s1-ru" style="display:none">Создайте бесплатный аккаунт</span></div>
+          <div class="step-item"><div class="step-circle">2</div><span class="step-item-text" id="s2-uz">1-darsni bepul ko'ring</span><span class="step-item-text" id="s2-ru" style="display:none">Смотрите 1-й урок бесплатно</span></div>
+          <div class="step-item"><div class="step-circle">3</div><span class="step-item-text" id="s3-uz">Test topshirib bilim oling</span><span class="step-item-text" id="s3-ru" style="display:none">Сдавайте тесты и получайте знания</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="auth-right">
+      <div class="auth-form-box">
+        <div class="lang-toggle" style="margin-bottom:32px;display:inline-flex">
+          <button class="lang-btn" data-l="uz" onclick="switchLang('uz')">UZ</button>
+          <button class="lang-btn" data-l="ru" onclick="switchLang('ru')">RU</button>
+        </div>
+
+        <h1 id="ft-uz">Ro'yxatdan o'tish</h1>
+        <h1 id="ft-ru" style="display:none">Регистрация</h1>
+        <p class="text-muted mb-32" style="margin-top:6px" id="fsub-uz">Bepul hisob yarating va o'qishni boshlang</p>
+        <p class="text-muted mb-32" style="margin-top:6px;display:none" id="fsub-ru">Создайте бесплатный аккаунт и начните учиться</p>
+
+        <div class="error-msg" id="error-msg"><span id="error-text"></span></div>
+
+        <form class="auth-form" id="reg-form">
+          <div class="form-group">
+            <label class="form-label" id="fn-uz">Ism familiya</label>
+            <label class="form-label" id="fn-ru" style="display:none">Полное имя</label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">👤</span>
+              <input type="text" class="form-input" id="fullName" required
+                placeholder="Ali Valiyev" minlength="3">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="em-uz">Telefon raqam</label>
+            <label class="form-label" id="em-ru" style="display:none">Номер телефона</label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">📱</span>
+              <input type="tel" class="form-input" id="phoneNumber" required placeholder="+998901234567">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="pw-uz">Parol <span class="text-muted text-sm">(kamida 6 belgi)</span></label>
+            <label class="form-label" id="pw-ru" style="display:none">Пароль <span class="text-muted text-sm">(минимум 6 символов)</span></label>
+            <div class="input-icon-wrap password-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="form-input" id="password" required minlength="6" placeholder="••••••••" oninput="checkStrength(this.value)">
+              <button type="button" class="password-toggle" id="toggle-pass">👁</button>
+            </div>
+            <div class="password-strength"><div class="strength-fill" id="strength-bar"></div></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="cp-uz">Parolni tasdiqlang</label>
+            <label class="form-label" id="cp-ru" style="display:none">Подтвердите пароль</label>
+            <div class="input-icon-wrap password-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="form-input" id="confirm-password" required placeholder="••••••••">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary submit-btn" id="submit-btn">
+            <span id="sbtn-uz">Ro'yxatdan o'tish</span>
+            <span id="sbtn-ru" style="display:none">Зарегистрироваться</span>
+          </button>
+        </form>
+
+        <div class="auth-footer-link mt-24">
+          <span id="ha-uz">Hisobingiz bormi?</span>
+          <span id="ha-ru" style="display:none">Уже есть аккаунт?</span>
+          <a href="/login" style="margin-left:6px">
+            <span id="ll-uz">Kirish</span>
+            <span id="ll-ru" style="display:none">Войти</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (Auth.isLoggedIn()) window.location.href = '/course';
+
+    function switchLang(lang) {
+      localStorage.setItem('lang', lang);
+      const isRu = lang === 'ru';
+      document.querySelectorAll('[id$="-ru"]').forEach(el => el.style.display = isRu ? '' : 'none');
+      document.querySelectorAll('[id$="-uz"]').forEach(el => el.style.display = isRu ? 'none' : '');
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.l === lang));
+    }
+    switchLang(localStorage.getItem('lang') || 'uz');
+
+    document.getElementById('toggle-pass').addEventListener('click', function() {
+      const inp = document.getElementById('password');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      this.textContent = inp.type === 'password' ? '👁' : '🙈';
+    });
+
+    function checkStrength(val) {
+      const bar = document.getElementById('strength-bar');
+      let pct = 0, color = '#ef4444';
+      if (val.length >= 6) { pct = 33; color = '#f59e0b'; }
+      if (val.length >= 8 && /[A-Z]/.test(val)) { pct = 66; color = '#3b82f6'; }
+      if (val.length >= 10 && /[A-Z]/.test(val) && /[0-9]/.test(val)) { pct = 100; color = '#10b981'; }
+      bar.style.width = pct + '%';
+      bar.style.background = color;
+    }
+
+    document.getElementById('reg-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errMsg = document.getElementById('error-msg');
+      errMsg.classList.remove('show');
+
+      const pwd = document.getElementById('password').value;
+      const cpwd = document.getElementById('confirm-password').value;
+      if (pwd !== cpwd) {
+        document.getElementById('error-text').textContent = 'Parollar mos kelmadi!';
+        errMsg.classList.add('show'); return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        const data = await Http.post('/api/auth/register', {
+          fullName: document.getElementById('fullName').value,
+          phoneNumber: document.getElementById('phoneNumber').value,
+          password: pwd
+        }, false);
+        Auth.save(data);
+        Toast.success("Muvaffaqiyatli ro'yxatdan o'tdingiz! 🎉");
+        setTimeout(() => window.location.href = '/course', 800);
+      } catch(err) {
+        document.getElementById('error-text').textContent = err.message || 'Xatolik yuz berdi';
+        errMsg.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = `<span id="sbtn-uz">Ro'yxatdan o'tish</span>`;
+      }
+    });
+  </script>
+</body>
+</html>

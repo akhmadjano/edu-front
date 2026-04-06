@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kirish — EduPlatform</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .auth-left {
+      background: var(--bg-1);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 60px;
+    }
+    .auth-left-bg {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+    .auth-glow {
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%);
+      top: -100px; left: -100px;
+    }
+    .auth-left-content { position: relative; z-index: 1; text-align: center; }
+    .auth-logo {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-bright), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 48px; display: block;
+    }
+    .auth-illustration {
+      font-size: 6rem; margin-bottom: 32px;
+      filter: drop-shadow(0 0 30px rgba(37,99,235,0.4));
+    }
+    .auth-left h2 { font-size: 1.8rem; margin-bottom: 12px; }
+    .auth-tagline { max-width: 300px; margin: 0 auto; }
+
+    .auth-features {
+      display: flex; flex-direction: column; gap: 16px;
+      margin-top: 48px; text-align: left;
+    }
+    .auth-feature {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 16px;
+    }
+    .auth-feature-icon { font-size: 1.2rem; }
+    .auth-feature-text { font-size: 0.88rem; color: var(--text-2); }
+
+    /* RIGHT SIDE */
+    .auth-right {
+      background: var(--bg-0);
+      display: flex; align-items: center; justify-content: center;
+      padding: 60px 40px;
+    }
+    .auth-form-box { width: 100%; max-width: 420px; }
+    .auth-form-box h1 {
+      font-size: 2rem; margin-bottom: 8px;
+    }
+    .auth-subtitle { color: var(--text-2); margin-bottom: 40px; font-size: 0.95rem; }
+
+    .auth-form { display: flex; flex-direction: column; gap: 20px; }
+    .auth-divider {
+      display: flex; align-items: center; gap: 12px; margin: 8px 0;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content:''; flex:1; height:1px; background: var(--border);
+    }
+    .auth-divider span { font-size: 0.82rem; color: var(--text-3); white-space: nowrap; }
+    .auth-footer-link {
+      text-align: center; font-size: 0.9rem; color: var(--text-2);
+    }
+    .auth-footer-link a { color: var(--accent-bright); font-weight: 600; }
+    .auth-footer-link a:hover { text-decoration: underline; }
+
+    .input-icon-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 1rem; pointer-events: none;
+    }
+    .input-icon-wrap .form-input { padding-left: 42px; }
+
+    .password-wrap { position: relative; }
+    .password-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); font-size: 1rem;
+      transition: color .2s;
+    }
+    .password-toggle:hover { color: var(--text-1); }
+
+    .submit-btn {
+      width: 100%; padding: 13px;
+      font-size: 1rem; justify-content: center;
+      margin-top: 8px;
+    }
+    .error-msg {
+      display: none;
+      background: var(--danger-dim);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px; font-size: 0.88rem; color: #f87171;
+    }
+    .error-msg.show { display: block; }
+
+    @media (max-width: 768px) {
+      .auth-page { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
+      .auth-right { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="auth-page">
+    <!-- LEFT -->
+    <div class="auth-left">
+      <div class="auth-left-bg">
+        <div class="auth-glow"></div>
+      </div>
+      <div class="auth-left-content">
+        <a href="/" class="auth-logo">EduPlatform</a>
+        <div class="auth-illustration">📚</div>
+        <h2 id="left-title-uz">Bilim — kuchdir!</h2>
+        <h2 id="left-title-ru" style="display:none">Знание — сила!</h2>
+        <p class="auth-tagline text-muted" id="left-sub-uz">Test asosidagi ta'lim orqali bilimingizni mustahkamlang</p>
+        <p class="auth-tagline text-muted" id="left-sub-ru" style="display:none">Укрепляйте знания через тест-ориентированное обучение</p>
+
+        <div class="auth-features">
+          <div class="auth-feature">
+            <span class="auth-feature-icon">🎯</span>
+            <span class="auth-feature-text" id="af1-uz">Har darsdan so'ng test topshiring</span>
+            <span class="auth-feature-text" id="af1-ru" style="display:none">Тест после каждого урока</span>
+          </div>
+          <div class="auth-feature">
+            <span class="auth-feature-icon">🔄</span>
+            <span class="auth-feature-text" id="af2-uz">Cheksiz urinish imkoniyati</span>
+            <span class="auth-feature-text" id="af2-ru" style="display:none">Неограниченное количество попыток</span>
+          </div>
+          <div class="auth-feature">
+            <span class="auth-feature-icon">📊</span>
+            <span class="auth-feature-text" id="af3-uz">Progressingizni kuzating</span>
+            <span class="auth-feature-text" id="af3-ru" style="display:none">Отслеживайте свой прогресс</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="auth-right">
+      <div class="auth-form-box">
+        <div class="lang-toggle" style="margin-bottom:32px; display:inline-flex">
+          <button class="lang-btn" data-l="uz" onclick="switchLang('uz')">UZ</button>
+          <button class="lang-btn" data-l="ru" onclick="switchLang('ru')">RU</button>
+        </div>
+
+        <h1 id="form-title-uz">Tizimga kirish</h1>
+        <h1 id="form-title-ru" style="display:none">Вход в систему</h1>
+        <p class="auth-subtitle" id="form-sub-uz">Hisobingizga xush kelibsiz 👋</p>
+        <p class="auth-subtitle" id="form-sub-ru" style="display:none">Добро пожаловать в ваш аккаунт 👋</p>
+
+        <div class="error-msg" id="error-msg">
+          <span id="error-text">Xatolik yuz berdi</span>
+        </div>
+
+        <form class="auth-form" id="login-form">
+          <div class="form-group">
+            <label class="form-label" id="email-label-uz">Telefon raqam</label>
+            <label class="form-label" id="email-label-ru" style="display:none">Номер телефона</label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">📱</span>
+              <input type="tel" class="form-input" id="phoneNumber" required
+                placeholder="+998901234567">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="pass-label-uz">Parol</label>
+            <label class="form-label" id="pass-label-ru" style="display:none">Пароль</label>
+            <div class="input-icon-wrap password-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="form-input" id="password" required
+                placeholder="••••••••">
+              <button type="button" class="password-toggle" id="toggle-pass">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary submit-btn" id="submit-btn">
+            <span id="btn-text-uz">Kirish</span>
+            <span id="btn-text-ru" style="display:none">Войти</span>
+          </button>
+        </form>
+
+        <div class="auth-footer-link mt-24">
+          <span id="no-acc-uz">Hisobingiz yo'qmi?</span>
+          <span id="no-acc-ru" style="display:none">Нет аккаунта?</span>
+          <a href="/register" style="margin-left:6px">
+            <span id="reg-link-uz">Ro'yxatdan o'tish</span>
+            <span id="reg-link-ru" style="display:none">Зарегистрироваться</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    // Agar login qilingan bo'lsa — redirect
+    if (Auth.isLoggedIn()) {
+      const next = new URLSearchParams(location.search).get('next') || '/course';
+      window.location.href = next;
+    }
+
+    // Lang
+    function switchLang(lang) {
+      localStorage.setItem('lang', lang);
+      const isRu = lang === 'ru';
+      document.querySelectorAll('[id$="-ru"]').forEach(el => el.style.display = isRu ? '' : 'none');
+      document.querySelectorAll('[id$="-uz"]').forEach(el => el.style.display = isRu ? 'none' : '');
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.l === lang));
+    }
+    switchLang(localStorage.getItem('lang') || 'uz');
+
+    // Password toggle
+    document.getElementById('toggle-pass').addEventListener('click', function() {
+      const inp = document.getElementById('password');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      this.textContent = inp.type === 'password' ? '👁' : '🙈';
+    });
+
+    // Login
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errMsg = document.getElementById('error-msg');
+      errMsg.classList.remove('show');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        const data = await Http.post('/api/auth/login', {
+          phoneNumber: document.getElementById('phoneNumber').value,
+          password: document.getElementById('password').value
+        }, false);
+
+        Auth.save(data);
+        Toast.success('Muvaffaqiyatli kirdingiz! ✅');
+        setTimeout(() => {
+          const next = new URLSearchParams(location.search).get('next') || '/course';
+          window.location.href = next;
+        }, 700);
+      } catch(err) {
+        document.getElementById('error-text').textContent = err.message || 'Telefon raqam yoki parol noto\'g\'ri';
+        errMsg.classList.add('show');
+        btn.disabled = false;
+        const isRu = localStorage.getItem('lang') === 'ru';
+        btn.innerHTML = isRu
+          ? '<span id="btn-text-ru">Войти</span>'
+          : '<span id="btn-text-uz">Kirish</span>';
+      }
+    });
+  </script>
+</body>
+</html>

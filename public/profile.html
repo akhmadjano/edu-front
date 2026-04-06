@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil — EduPlatform</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .profile-layout { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    .profile-header {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card2) 100%);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 36px; display: flex; align-items: center; gap: 28px;
+      margin-bottom: 24px; position: relative; overflow: hidden;
+    }
+    .profile-header::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, var(--accent), var(--teal));
+    }
+    .profile-avatar {
+      width: 88px; height: 88px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--teal));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 2rem; font-weight: 800;
+      box-shadow: 0 0 0 4px var(--bg-card), 0 0 0 6px var(--border-bright);
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; margin-bottom: 4px; }
+    .profile-email { color: var(--text-2); margin-bottom: 12px; font-size:.9rem; }
+    .profile-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .progress-col { flex-shrink: 0; text-align: center; }
+    .progress-big {
+      font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, var(--accent-bright), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; text-align: center; }
+    .stat-num { font-family: var(--font-display); font-size: 1.9rem; font-weight: 800; }
+    .stat-lbl { font-size: 0.75rem; color: var(--text-3); margin-top: 4px; }
+
+    /* Telegram card */
+    .tg-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+    .tg-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .tg-icon-wrap {
+      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, #229ED9, #1a8fc4);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tg-icon-wrap svg { width: 26px; height: 26px; fill: white; }
+    .tg-linked-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 99px;
+      background: rgba(34,158,217,.12); color: #229ED9;
+      border: 1px solid rgba(34,158,217,.3); font-weight: 600; font-size:.88rem;
+    }
+    .tg-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+    .tg-step { display: flex; align-items: flex-start; gap: 10px; }
+    .tg-step-num {
+      min-width: 26px; height: 26px; border-radius: 50%;
+      background: var(--accent-dim); color: var(--accent-bright);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .78rem; flex-shrink: 0; margin-top: 2px;
+    }
+    .tg-step-text { font-size: .85rem; color: var(--text-2); line-height: 1.55; padding-top: 3px; }
+    .tg-step-text b { color: var(--text-1); }
+
+    /* Premium card */
+    /* Premium card */
+    .premium-card { border-radius: var(--radius); padding: 28px; margin-bottom: 24px; position: relative; overflow: hidden; }
+    .premium-card.active {
+      background: linear-gradient(135deg, rgba(245,158,11,.13) 0%, rgba(251,191,36,.06) 100%);
+      border: 1.5px solid rgba(245,158,11,.45);
+      box-shadow: 0 4px 32px rgba(245,158,11,.12);
+    }
+    .premium-card.inactive { background: var(--bg-card); border: 1px solid var(--border); }
+    .premium-card.active::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
+      background-size: 200% 100%; animation: shimmer 2.5s infinite linear;
+    }
+    .premium-card.inactive::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--border), var(--border-bright), var(--border));
+    }
+    @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+    .premium-status-banner {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;
+    }
+    .premium-status-banner.active-banner {
+      background: linear-gradient(135deg, rgba(245,158,11,.18), rgba(251,191,36,.08));
+      border: 1px solid rgba(245,158,11,.4);
+    }
+    .premium-status-banner.inactive-banner { background: var(--bg-2); border: 1px solid var(--border); }
+    .psb-icon { font-size: 2.4rem; flex-shrink: 0; }
+    .psb-content { flex: 1; }
+    .psb-title { font-weight: 800; font-size: 1.1rem; }
+    .psb-title.gold { color: #f59e0b; }
+    .psb-sub { font-size: .83rem; color: var(--text-2); margin-top: 3px; }
+    .psb-badge-active {
+      padding: 6px 16px; border-radius: 99px; font-size: .8rem; font-weight: 700;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #000; flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(245,158,11,.4);
+    }
+    .psb-badge-inactive {
+      padding: 6px 14px; border-radius: 99px; font-size: .78rem; font-weight: 600;
+      background: var(--bg-3); color: var(--text-3); flex-shrink: 0;
+    }
+    .premium-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .premium-icon-wrap { font-size: 2rem; width: 50px; height: 50px; background: rgba(245,158,11,.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .premium-feats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
+    .pf { border-radius: var(--radius-sm); padding: 14px; text-align: center; transition: transform .2s; }
+    .pf:hover { transform: translateY(-2px); }
+    .premium-card.active .pf { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); }
+    .premium-card.inactive .pf { background: var(--bg-2); border: 1px solid var(--border); }
+    .pf-icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .pf-lbl { font-size: .75rem; color: var(--text-2); font-weight: 500; }
+    .pay-steps { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-size: .83rem; }
+    .pay-steps ol { margin: 8px 0 0 16px; color: var(--text-2); line-height: 2; }
+
+    /* Sections */
+    .sec-list { display: flex; flex-direction: column; gap: 12px; }
+    .sec-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .sec-card.done { border-color: rgba(16,185,129,0.3); }
+    .sec-card.active { border-color: var(--border-bright); }
+    .sec-card.locked { opacity: 0.55; }
+    .sec-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .sec-icon.done { background: rgba(16,185,129,.15); }
+    .sec-icon.active { background: var(--accent-dim); }
+    .sec-icon.locked { background: var(--bg-3); }
+
+    /* Password */
+    .pwd-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .pwd-form { display: flex; flex-direction: column; gap: 14px; max-width: 400px; }
+    .pw-wrap { position: relative; }
+    .pw-wrap .form-input { padding-right: 48px; }
+    .pw-toggle { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-3); }
+
+    @media(max-width:700px) {
+      .profile-header { flex-direction: column; text-align: center; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .premium-feats { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+<header class="nav" id="main-nav"></header>
+<div id="toast-container" class="toast-container"></div>
+
+<div class="page-wrapper">
+  <div class="profile-layout" id="root">
+    <div style="text-align:center;padding:80px;color:var(--text-3)">
+      <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border-width:3px"></div>
+      Yuklanmoqda...
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+// ── BOT USERNAME — application.yml ga mos keltiring ────────────
+const BOT = 'FORUSERNAME_BOT';
+// Misol: const BOT = 'my_edu_bot';   @dan keyingi qism
+
+// ── SVG TELEGRAM ICON ──────────────────────────────────────────
+const TG_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>`;
+
+async function loadProfile() {
+  if (!requireAuth()) return;
+  try {
+    const [me, progress] = await Promise.all([
+      Http.get('/api/auth/me'),
+      Http.get('/api/course/my-progress')
+    ]);
+    render(me, progress);
+  } catch(e) {
+    document.getElementById('root').innerHTML =
+      `<div style="color:var(--danger);padding:40px">⚠️ ${e.message}</div>`;
+  }
+}
+
+function render(me, progress) {
+  const initials = me.fullName.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+  const pct = progress.overallProgressPercent || 0;
+  // Telegram ?start= faqat A-Za-z0-9_- qabul qiladi
+  // Shuning uchun telefon raqamni base64 ga o'giramiz
+  const tgParam = btoa(me.phoneNumber).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  const tgLink = `https://t.me/${BOT}?start=${tgParam}`;
+
+  document.getElementById('root').innerHTML = `
+
+    <!-- PROFIL HEADER -->
+    <div class="profile-header fade-in">
+      <div class="profile-avatar">${initials}</div>
+      <div class="profile-info">
+        <div class="profile-name">${me.fullName}</div>
+        <div class="profile-email">📱 ${me.phoneNumber}</div>
+        <div class="profile-badges">
+          <span class="badge badge-blue">${me.role==='ADMIN'?'⚡ Admin':'👤 Foydalanuvchi'}</span>
+          ${(me.isPremium || me.premium) ? '<span class="badge badge-yellow">💎 Premium</span>' : ''}
+          ${me.telegramLinked ? '<span class="badge" style="background:rgba(34,158,217,.12);color:#229ED9;border:1px solid rgba(34,158,217,.3)">' + TG_SVG + ' Telegram</span>' : ''}
+          ${progress.passedSections > 0 ? `<span class="badge badge-green">🏆 ${progress.passedSections} bo'lim</span>` : ''}
+        </div>
+      </div>
+      <div class="progress-col">
+        <div class="progress-big">${pct}%</div>
+        <div style="font-size:.75rem;color:var(--text-3);margin-top:4px">Umumiy progress</div>
+        <div class="progress-bar" style="width:110px;margin:8px auto 0">
+          <div class="progress-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATISTIKA -->
+    <div class="stats-grid fade-in-2">
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent-bright)">${progress.totalLessons}</div><div class="stat-lbl">Jami darslar</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--teal)">${progress.watchedLessons}</div><div class="stat-lbl">Ko'rilgan</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--success)">${progress.passedLessonTests}</div><div class="stat-lbl">Test o'tildi</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--warning)">${progress.passedSections}</div><div class="stat-lbl">Bo'lim yakunlandi</div></div>
+    </div>
+
+    <!-- TELEGRAM -->
+    ${tgCard(me, tgLink)}
+
+    <!-- PREMIUM -->
+    ${premiumCard(me, tgLink)}
+
+    <!-- BO'LIMLAR PROGRESS -->
+    <h3 style="font-family:var(--font-display);margin-bottom:14px">📊 Bo'limlar progressi</h3>
+    <div class="sec-list fade-in-3">
+      ${(progress.sections||[]).map(sec => {
+        const p = sec.totalLessons ? Math.round(sec.passedLessons/sec.totalLessons*100) : 0;
+        const s = sec.finalTestPassed ? 'done' : sec.isUnlocked ? 'active' : 'locked';
+        return `
+        <div class="sec-card ${s}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="sec-icon ${s}">${sec.finalTestPassed?'🏆':sec.isUnlocked?'📖':'🔒'}</div>
+              <div>
+                <div style="font-weight:700">${sec.sectionTitle}</div>
+                <div style="font-size:.75rem;color:var(--text-2)">Bo'lim ${sec.orderIndex}</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              ${sec.finalTestPassed?'<span class="badge badge-green">✅ Yakunlandi</span>':sec.isUnlocked?`<span class="badge badge-blue">${p}%</span>`:'<span class="badge badge-gray">🔒</span>'}
+              ${sec.finalTestBestScore!=null?`<div style="font-size:.73rem;color:var(--text-3);margin-top:3px">Final: <b style="color:${sec.finalTestBestScore>=80?'var(--success)':'var(--warning)'}">${sec.finalTestBestScore}%</b></div>`:''}
+            </div>
+          </div>
+          <div style="font-size:.75rem;color:var(--text-2);margin-bottom:7px">${sec.passedLessons}/${sec.totalLessons} dars testi o'tildi</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- PAROL O'ZGARTIRISH -->
+    <div class="pwd-card mt-32 fade-in-4">
+      <h3 style="font-family:var(--font-display);margin-bottom:18px">🔐 Parolni o'zgartirish</h3>
+      <div class="pwd-form">
+        <div class="form-group">
+          <label class="form-label">Eski parol</label>
+          <div class="pw-wrap">
+            <input type="password" class="form-input" id="old-pwd" placeholder="••••••••">
+            <button type="button" class="pw-toggle" onclick="togglePwd('old-pwd',this)">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Yangi parol</label>
+          <div class="pw-wrap">
+            <input type="password" class="form-input" id="new-pwd" minlength="6" placeholder="••••••••">
+            <button type="button" class="pw-toggle" onclick="togglePwd('new-pwd',this)">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Yangi parolni tasdiqlang</label>
+          <input type="password" class="form-input" id="conf-pwd" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary" id="pwd-btn" onclick="changePassword()">💾 Saqlash</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── TELEGRAM CARD ───────────────────────────────────────────────
+function tgCard(me, tgLink) {
+  if (me.telegramLinked) {
+    const tgUsername = me.telegramUsername ? `@${me.telegramUsername}` : '';
+    const tgChatId   = me.telegramChatId   ? `Chat ID: ${me.telegramChatId}` : '';
+    return `
+    <div class="tg-card fade-in-2">
+      <div class="tg-card-head">
+        <div class="tg-icon-wrap">${TG_SVG}</div>
+        <div style="flex:1">
+          <div style="font-weight:700">Telegram bot</div>
+          <div style="font-size:.82rem;color:var(--text-2)">To'lov va bildirishnomalar</div>
+        </div>
+        <span class="badge" style="background:rgba(16,185,129,.12);color:var(--success);border:1px solid rgba(16,185,129,.3);flex-shrink:0">✅ Ulangan</span>
+      </div>
+      <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="tg-linked-badge" style="flex:1;min-width:0">${TG_SVG}&nbsp; Telegram bog'langan ✅</div>
+        </div>
+        ${tgUsername ? `<div style="margin-top:8px;font-size:.83rem;color:var(--text-2)">👤 Telegram: <b style="color:var(--text-1)">${tgUsername}</b></div>` : ''}
+        ${tgChatId   ? `<div style="margin-top:4px;font-size:.78rem;color:var(--text-3)">${tgChatId}</div>` : ''}
+      </div>
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:.82rem;color:var(--text-2)">
+        ⚠️ <b style="color:var(--danger)">Diqqat:</b> uzish va boshqa Telegram akkauntni bog'lash uchun — avval shu akkauntni o'chirib, keyin yangi akkaunt bilan botga /start yuboring.
+      </div>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger);border:1px solid rgba(239,68,68,.25)" onclick="unlinkTelegram()">
+        🔓 Telegram uzish
+      </button>
+    </div>`;
+  }
+
+  return `
+  <div class="tg-card fade-in-2">
+    <div class="tg-card-head">
+      <div class="tg-icon-wrap">${TG_SVG}</div>
+      <div style="flex:1">
+        <div style="font-weight:700">Telegram bot bilan bog'lash</div>
+        <div style="font-size:.82rem;color:var(--text-2)">Premium to'lov uchun zarur</div>
+      </div>
+      <span class="badge" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);flex-shrink:0">Bog'lanmagan</span>
+    </div>
+
+    <div class="tg-steps">
+      <div class="tg-step"><div class="tg-step-num">1</div><div class="tg-step-text">Quyidagi tugma orqali <b>Telegram botni oching</b></div></div>
+      <div class="tg-step"><div class="tg-step-num">2</div><div class="tg-step-text">Botda <b>START</b> tugmasini bosing — telefon raqamingiz avtomatik yuboriladi</div></div>
+      <div class="tg-step"><div class="tg-step-num">3</div><div class="tg-step-text">Bot <b>"Akkounting bog'landi ✅"</b> deb javob bersa tayyor</div></div>
+      <div class="tg-step"><div class="tg-step-num">4</div><div class="tg-step-text">Sahifani yangilang — profilda Telegram belgisi paydo bo'ladi</div></div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <a href="${tgLink}" target="_blank" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px">
+        ${TG_SVG} Telegram botni ochish
+      </a>
+      <button class="btn btn-ghost btn-sm" onclick="copyLink('${tgLink}')">📋 Havolani nusxalash</button>
+      <button class="btn btn-ghost btn-sm" onclick="checkLink()">🔄 Tekshirish</button>
+    </div>
+
+    <div style="margin-top:12px;background:var(--bg-2);border-radius:var(--radius-sm);padding:10px 14px;font-size:.78rem;color:var(--text-3)">
+      💡 Agar tugma ishlamasa: botga qo'lda yuboring: <code style="color:var(--text-2)">/link ${me.phoneNumber}</code>
+    </div>
+  </div>`;
+}
+
+// ── PREMIUM CARD ────────────────────────────────────────────────
+function premiumCard(me, tgLink) {
+  const hasPremium = me.isPremium === true || me.premium === true;
+  if (hasPremium) {
+    const until = me.premiumUntil
+      ? new Date(me.premiumUntil).toLocaleDateString('uz-UZ',{year:'numeric',month:'long',day:'numeric'})
+      : 'Abadiy';
+    const daysLeft = me.premiumUntil
+      ? Math.max(0, Math.ceil((new Date(me.premiumUntil) - new Date()) / 86400000))
+      : null;
+    return `
+    <div class="premium-card active fade-in-2">
+      <!-- Big status banner -->
+      <div class="premium-status-banner active-banner">
+        <div class="psb-icon">💎</div>
+        <div class="psb-content">
+          <div class="psb-title gold">Premium obuna faol!</div>
+          <div class="psb-sub">
+            📅 Muddati: <b style="color:var(--text-1)">${until}</b>
+            ${daysLeft !== null ? ` &nbsp;·&nbsp; <b style="color:#f59e0b">${daysLeft} kun qoldi</b>` : ''}
+          </div>
+        </div>
+        <span class="psb-badge-active">✅ FAOL</span>
+      </div>
+
+      <div class="premium-feats">
+        <div class="pf"><div class="pf-icon">📚</div><div class="pf-lbl">Barcha darslar</div></div>
+        <div class="pf"><div class="pf-icon">📝</div><div class="pf-lbl">Barcha testlar</div></div>
+        <div class="pf"><div class="pf-icon">🏆</div><div class="pf-lbl">Sertifikat</div></div>
+      </div>
+    </div>`;
+  }
+
+  // Premium yo'q
+  const hasTg = me.telegramLinked;
+  return `
+  <div class="premium-card inactive fade-in-2">
+    <!-- Big status banner -->
+    <div class="premium-status-banner inactive-banner">
+      <div class="psb-icon">💎</div>
+      <div class="psb-content">
+        <div class="psb-title">Premium obuna</div>
+        <div class="psb-sub">Barcha dars va testlarga to'liq kirish uchun obuna oling</div>
+      </div>
+      <span class="psb-badge-inactive">❌ Faol emas</span>
+    </div>
+
+    <div class="premium-feats">
+      <div class="pf"><div class="pf-icon">📚</div><div class="pf-lbl">Barcha darslar</div></div>
+      <div class="pf"><div class="pf-icon">📝</div><div class="pf-lbl">Barcha testlar</div></div>
+      <div class="pf"><div class="pf-icon">🗓</div><div class="pf-lbl">30 kunlik kirish</div></div>
+    </div>
+
+    ${hasTg ? `
+    <div class="pay-steps">
+      <b>💳 Qanday sotib olish mumkin:</b>
+      <ol>
+        <li>Telegram botga o'ting: <a href="https://t.me/${BOT}" target="_blank" style="color:var(--accent-bright)">@${BOT}</a></li>
+        <li><b>💳 Premium sotib olish</b> tugmasini bosing</li>
+        <li>Bot karta raqamini beradi — pul o'tkazing</li>
+        <li>To'lov chekini (screenshot) botga yuboring</li>
+        <li>Admin tasdiqlashi bilan premium faollashadi ⚡</li>
+      </ol>
+    </div>
+    <a href="https://t.me/${BOT}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px">
+      ${TG_SVG} Telegram bot orqali sotib olish
+    </a>` : `
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--radius-sm);padding:16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:1.6rem;flex-shrink:0">⚠️</span>
+      <div>
+        <b style="font-size:.9rem">Avval Telegram botni bog'lang</b><br>
+        <span style="color:var(--text-2);font-size:.82rem">Premium Telegram bot orqali to'lanadi — avval bog'lash kerak</span>
+      </div>
+    </div>
+    <a href="${tgLink}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px">
+      ${TG_SVG} Telegram botni bog'lash →
+    </a>`}
+  </div>`;
+}
+// ── ACTIONS ─────────────────────────────────────────────────────
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(
+    ()  => Toast.success('Havola nusxalandi! 📋'),
+    ()  => { prompt('Nusxalang:', url); }
+  );
+}
+
+async function checkLink() {
+  const btn = document.querySelector('[onclick="checkLink()"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Tekshirilmoqda...'; }
+  try {
+    const me = await Http.get('/api/auth/me');
+    if (me.telegramLinked) {
+      Toast.success('Telegram muvaffaqiyatli bog\'landi! ✅');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      Toast.warning('Hali bog\'lanmagan. Botda START tugmasini bosing.');
+      if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Tekshirish'; }
+    }
+  } catch(e) {
+    // 409 = boshqa akkauntga ulangan
+    if (e.status === 409) {
+      showAlreadyLinkedModal(e.message || 'Bu Telegram akkaunt boshqa foydalanuvchiga ulangan!');
+    } else {
+      Toast.error(e.message);
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Tekshirish'; }
+  }
+}
+
+function showAlreadyLinkedModal(msg) {
+  // Remove old if exists
+  document.getElementById('tg-conflict-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'tg-conflict-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px';
+  modal.innerHTML = `
+    <div style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:var(--radius);max-width:460px;width:100%;overflow:hidden">
+      <div style="height:3px;background:linear-gradient(90deg,var(--danger),#f87171)"></div>
+      <div style="padding:28px;text-align:center">
+        <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+        <div style="font-family:var(--font-display);font-size:1.15rem;font-weight:800;margin-bottom:10px">Telegram akkaunt band!</div>
+        <div style="color:var(--text-2);font-size:.9rem;margin-bottom:20px;line-height:1.6">
+          Bu Telegram akkaunt <b style="color:var(--danger)">boshqa foydalanuvchiga ulangan</b>.<br>
+          Ushbu akkauntni ishlatish uchun — avval u bog'langan sayt profilidan Telegram-ni uzing, so'ng qayta urinib ko'ring.
+        </div>
+        <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:.82rem;color:var(--text-3);margin-bottom:20px;text-align:left">
+          💡 <b>Nima qilish kerak:</b><br>
+          1. Eski sayt akkauntiga kiring<br>
+          2. Profil → Telegram → "Telegram uzish" bosing<br>
+          3. Qaytib bu akkauntda botga /start yuboring
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('tg-conflict-modal').remove()">Tushunarli</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function unlinkTelegram() {
+  if (!confirm('Telegram bog\'lanishini o\'chirmoqchimisiz?\n\nBu amal Telegram orqali bildirishnomalarni to\'xtatadi.')) return;
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
+  try {
+    await Http.delete('/api/auth/telegram/unlink');
+    Toast.success('Telegram bog\'lanishi muvaffaqiyatli o\'chirildi ✅');
+    setTimeout(() => location.reload(), 700);
+  } catch(e) {
+    Toast.error(e.message || 'Uzish xatosi');
+    if (btn) { btn.disabled = false; btn.innerHTML = '🔓 O\'chirish'; }
+  }
+}
+
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+async function changePassword() {
+  const oldPwd  = document.getElementById('old-pwd').value;
+  const newPwd  = document.getElementById('new-pwd').value;
+  const confPwd = document.getElementById('conf-pwd').value;
+  if (!oldPwd || !newPwd) { Toast.error('Maydonlarni to\'ldiring'); return; }
+  if (newPwd !== confPwd) { Toast.error('Yangi parollar mos kelmadi!'); return; }
+  const btn = document.getElementById('pwd-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    await Http.put('/api/auth/change-password', { oldPassword: oldPwd, newPassword: newPwd });
+    Toast.success('Parol muvaffaqiyatli o\'zgartirildi! ✅');
+    ['old-pwd','new-pwd','conf-pwd'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) { Toast.error(e.message || 'Xatolik'); }
+  btn.disabled = false; btn.innerHTML = '💾 Saqlash';
+}
+
+document.addEventListener('DOMContentLoaded', loadProfile);
+</script>
+</body>
+</html>

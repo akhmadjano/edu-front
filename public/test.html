@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test — EduPlatform</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── THEME ─────────────────────────────────────────────── */
+    :root {
+      --bg-main:       #0a0e1a;
+      --bg-card:       #0d1526;
+      --bg-card2:      #111c30;
+      --panel:         rgba(13,21,38,.95);
+      --border:        rgba(80,140,255,.18);
+      --border-bright: rgba(80,140,255,.4);
+      --accent:        #3b6fd4;
+      --accent2:       #5b8ff9;
+      --teal:          #00c8b0;
+      --gold:          #f5c842;
+      --text-1:        #e8eef8;
+      --text-2:        #8ba4cc;
+      --text-3:        #4a6080;
+      --success:       #22d3a0;
+      --danger:        #f25c7a;
+      --warning:       #f5a623;
+      --radius:        10px;
+      --radius-sm:     7px;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-1);
+      overflow: hidden;
+    }
+
+    /* ── ANIMATED BACKGROUND ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 80%, rgba(30,60,160,.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 20%, rgba(0,80,180,.25) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(80,140,255,.1) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── TOPBAR ─────────────────────────────────────────────── */
+    .topbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 52px;
+      background: rgba(6,10,22,.95);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .topbar-logo {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text-1);
+    }
+    .topbar-center {
+      font-family: 'Exo 2', sans-serif;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar-back {
+      font-family: 'Exo 2', sans-serif;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .topbar-back:hover { color: var(--text-1); }
+    .topbar-finish {
+      font-family: 'Exo 2', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--gold);
+      background: none;
+      border: 1px solid rgba(245,200,66,.3);
+      padding: 5px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .topbar-finish:hover { background: rgba(245,200,66,.08); }
+
+    /* ── PAGE SHELL ─────────────────────────────────────────── */
+    .page-shell {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 52px);
+    }
+
+    /* ── QUESTION TITLE BAR ─────────────────────────────────── */
+    .q-title-bar {
+      flex-shrink: 0;
+      background: linear-gradient(90deg, rgba(30,60,160,.65) 0%, rgba(15,30,80,.4) 100%);
+      border-bottom: 1px solid var(--border-bright);
+      padding: 13px 28px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: .98rem;
+      font-weight: 600;
+      color: var(--text-1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 50px;
+    }
+    .q-num-badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── CONTENT ROW ────────────────────────────────────────── */
+    .content-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      overflow: hidden;
+    }
+
+    /* ── LEFT: OPTIONS ──────────────────────────────────────── */
+    .left-panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+      gap: 8px;
+    }
+
+    .opt-btn {
+      display: flex;
+      align-items: stretch;
+      background: rgba(18,32,60,.75);
+      border: 1px solid rgba(80,140,255,.2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+      font-size: .88rem;
+      color: var(--text-1);
+      text-align: left;
+      width: 100%;
+      transition: all .15s;
+      overflow: hidden;
+    }
+    .opt-btn:hover:not(:disabled) {
+      border-color: var(--accent2);
+      background: rgba(59,111,212,.2);
+    }
+    .opt-btn.selected {
+      border-color: var(--accent2);
+      background: rgba(59,111,212,.3);
+    }
+    .opt-btn.correct {
+      border-color: var(--success);
+      background: rgba(34,211,160,.1);
+    }
+    .opt-btn.wrong {
+      border-color: var(--danger);
+      background: rgba(242,92,122,.1);
+    }
+    .opt-btn:disabled { cursor: default; }
+
+    .opt-letter {
+      min-width: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 700;
+      font-size: .8rem;
+      color: var(--accent2);
+      background: rgba(59,111,212,.2);
+      border-right: 1px solid rgba(80,140,255,.15);
+      flex-shrink: 0;
+      transition: background .15s;
+      padding: 12px 0;
+    }
+    .opt-btn.selected .opt-letter { background: rgba(59,111,212,.55); color: #fff; }
+    .opt-btn.correct  .opt-letter { background: rgba(34,211,160,.18); color: var(--success); }
+    .opt-btn.wrong    .opt-letter { background: rgba(242,92,122,.15); color: var(--danger); }
+
+    .opt-text {
+      padding: 12px 14px;
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .correct-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(34,211,160,.1);
+      color: var(--success);
+      border: 1px solid rgba(34,211,160,.28);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: .78rem;
+      margin-top: 4px;
+    }
+
+    /* ── RIGHT: IMAGE ───────────────────────────────────────── */
+    .right-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .q-image-wrap {
+      width: 100%;
+      max-width: 540px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border-bright);
+      box-shadow: 0 8px 40px rgba(0,0,0,.55);
+      background: #060a14;
+    }
+    .q-image-wrap img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .no-image-placeholder {
+      width: 100%;
+      max-width: 380px;
+      aspect-ratio: 4/3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--text-3);
+      font-size: .9rem;
+    }
+
+    /* ── NUMBER GRID ────────────────────────────────────────── */
+    .num-grid-bar {
+      flex-shrink: 0;
+      background: rgba(6,10,22,.9);
+      border-top: 1px solid var(--border);
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .num-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      flex: 1;
+    }
+    .num-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 5px;
+      border: 1px solid rgba(80,140,255,.22);
+      background: rgba(16,28,55,.8);
+      color: var(--text-2);
+      font-family: 'Exo 2', sans-serif;
+      font-size: .75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .num-btn:hover         { border-color: var(--accent2); color: var(--text-1); }
+    .num-btn.active        { border-color: var(--accent2); background: var(--accent); color: #fff; }
+    .num-btn.answered      { border-color: rgba(91,143,249,.45); background: rgba(59,111,212,.22); color: var(--accent2); }
+    .num-btn.active.answered { background: var(--accent); color: #fff; }
+    .num-btn.passed        { border-color: rgba(34,211,160,.5); background: rgba(34,211,160,.14); color: var(--success); }
+    .num-btn.failed        { border-color: rgba(242,92,122,.45); background: rgba(242,92,122,.1); color: var(--danger); }
+
+    .grid-counter {
+      font-family: 'Exo 2', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--text-2);
+      white-space: nowrap;
+    }
+    .grid-counter span { color: var(--accent2); }
+
+    /* ── FULLSCREEN OPTION OVERLAY ──────────────────────────── */
+    .opt-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.86);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .opt-overlay.open { opacity: 1; pointer-events: all; }
+    .opt-overlay-box {
+      background: linear-gradient(140deg, #0f1e3a 0%, #0a1428 100%);
+      border: 1px solid var(--border-bright);
+      border-radius: 14px;
+      padding: 40px 44px;
+      max-width: 620px;
+      width: 100%;
+      text-align: center;
+      transform: scale(.93) translateY(10px);
+      transition: transform .2s;
+      box-shadow: 0 24px 80px rgba(0,0,0,.65);
+    }
+    .opt-overlay.open .opt-overlay-box { transform: scale(1) translateY(0); }
+    .opt-overlay-letter {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 4px 20px rgba(59,111,212,.45);
+    }
+    .opt-overlay-text {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-1);
+      line-height: 1.55;
+      margin-bottom: 30px;
+    }
+    .opt-overlay-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .ov-btn {
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: .92rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+    .ov-btn-confirm { background: var(--accent); color: #fff; }
+    .ov-btn-confirm:hover { background: var(--accent2); }
+    .ov-btn-cancel {
+      background: rgba(80,140,255,.08);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+    }
+    .ov-btn-cancel:hover { color: var(--text-1); background: rgba(80,140,255,.15); }
+
+    /* ── RESULT OVERLAY ─────────────────────────────────────── */
+    .result-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.88);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+    .result-overlay.open { opacity: 1; pointer-events: all; }
+    .result-box {
+      background: linear-gradient(140deg, #0f1e3a 0%, #0a1428 100%);
+      border: 1px solid var(--border-bright);
+      border-radius: 16px;
+      padding: 44px 52px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      transform: translateY(18px);
+      transition: transform .25s;
+      box-shadow: 0 28px 80px rgba(0,0,0,.7);
+    }
+    .result-overlay.open .result-box { transform: translateY(0); }
+    .result-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+    .result-score-big {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 4.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .result-msg {
+      font-size: .92rem;
+      color: var(--text-2);
+      margin-bottom: 18px;
+    }
+    .result-stats {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 28px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: .88rem;
+      font-weight: 700;
+    }
+    .result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .r-btn {
+      padding: 12px 26px;
+      border-radius: 8px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+    .r-btn-primary { background: var(--accent); color: #fff; }
+    .r-btn-primary:hover { background: var(--accent2); }
+    .r-btn-ghost {
+      background: rgba(80,140,255,.08);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+    }
+    .r-btn-ghost:hover { color: var(--text-1); }
+
+    /* ── STATE / SPINNER ────────────────────────────────────── */
+    .state-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+      color: var(--text-2);
+      font-family: 'Exo 2', sans-serif;
+      font-size: .9rem;
+    }
+    .spinner-ring {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(80,140,255,.15);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* toast fallback */
+    .toast-container { position: fixed; top: 66px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 8px; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      body { overflow-y: auto; }
+      .page-shell { height: auto; overflow: visible; }
+      .content-row {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+      .left-panel  { overflow: visible; border-right: none; border-bottom: 1px solid var(--border); }
+      .right-panel { padding: 16px; }
+      .q-image-wrap { max-width: 100%; }
+      .num-grid-bar { padding: 10px 16px; }
+    }
+    @media (max-width: 600px) {
+      .topbar { padding: 0 14px; }
+      .topbar-center { display: none; }
+      .opt-overlay-box { padding: 28px 18px; }
+      .opt-overlay-text { font-size: 1.05rem; }
+      .result-box { padding: 32px 22px; }
+      .result-score-big { font-size: 3.2rem; }
+      .num-btn { width: 28px; height: 28px; font-size: .7rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="toast-container" class="toast-container"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">EduPlatform</div>
+  <div class="topbar-center" id="topbar-center">Test</div>
+  <div class="topbar-right">
+    <a class="topbar-back" id="back-link" href="#">← Orqaga</a>
+    <button class="topbar-finish" onclick="finishConfirm()">Test Yakunlash</button>
+  </div>
+</div>
+
+<!-- PAGE SHELL -->
+<div class="page-shell" id="page-shell">
+  <!-- Q TITLE BAR -->
+  <div class="q-title-bar" id="q-title-bar" style="display:none">
+    <span class="q-num-badge" id="q-num-badge">1</span>
+    <span id="q-title-text"></span>
+  </div>
+
+  <!-- CONTENT ROW -->
+  <div class="content-row" id="content-row">
+    <div style="grid-column:1/-1">
+      <div class="state-center">
+        <div class="spinner-ring"></div>
+        <span>Yuklanmoqda...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUMBER GRID BAR -->
+  <div class="num-grid-bar" id="num-grid-bar" style="display:none">
+    <div class="num-grid" id="num-grid"></div>
+    <div class="grid-counter" id="grid-counter"></div>
+  </div>
+</div>
+
+<!-- OPTION FULLSCREEN OVERLAY -->
+<div class="opt-overlay" id="opt-overlay" onclick="overlayBgClick(event)">
+  <div class="opt-overlay-box">
+    <div class="opt-overlay-letter" id="ov-letter">A</div>
+    <div class="opt-overlay-text" id="ov-text"></div>
+    <div class="opt-overlay-btns">
+      <button class="ov-btn ov-btn-confirm" onclick="confirmOverlay()">✅ Javobni tanlash</button>
+      <button class="ov-btn ov-btn-cancel"  onclick="closeOverlay()">✕ Bekor</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-box">
+    <div class="result-emoji"     id="r-emoji">🎉</div>
+    <div class="result-score-big" id="r-score">0%</div>
+    <div class="result-msg"       id="r-msg"></div>
+    <div class="result-stats"     id="r-stats"></div>
+    <div class="result-btns"      id="r-btns"></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+// ── PARAMS ───────────────────────────────────────────────────────
+const params    = new URLSearchParams(location.search);
+const testType  = params.get('type') || 'lesson';
+const entityId  = parseInt(params.get('id') || '0');
+const backUrl   = decodeURIComponent(params.get('back') || '') || '/course';
+
+let questions   = [];
+let answers     = {};
+let submitted   = false;
+let currentQ    = 0;
+let resultData  = null;
+let pendingOpt  = null; // { qId, optText, optIdx, letter }
+
+// ── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  document.getElementById('back-link').href = backUrl;
+
+  if (!entityId) {
+    showLayoutError('Noto\'g\'ri havola: id parametri yo\'q');
+    return;
+  }
+  if (typeof Auth !== 'undefined' && !Auth.isLoggedIn()) {
+    showLayoutError('Test topshirish uchun <a href="/login" style="color:var(--accent2)">tizimga kiring</a>');
+    return;
+  }
+  await loadTest();
+}
+
+// ── LOAD TEST ────────────────────────────────────────────────────
+async function loadTest() {
+  try {
+    const url = testType === 'lesson'
+      ? `/api/course/lessons/${entityId}/test`
+      : `/api/course/sections/${entityId}/final-test`;
+
+    const all = await Http.get(url);
+    if (!all || !all.length) {
+      showLayoutError('⚠️ Savollar hali qo\'shilmagan');
+      return;
+    }
+
+    const LIMIT = 25;
+    // shuffle questions, shuffle options per question
+    questions = shuffleArray(all)
+      .slice(0, Math.min(LIMIT, all.length))
+      .map(q => ({ ...q, options: shuffleArray(q.options || []) }));
+
+    answers   = {};
+    submitted = false;
+    currentQ  = 0;
+    resultData = null;
+
+    const label = testType === 'lesson' ? 'Dars testi' : 'Bo\'lim yakuniy testi';
+    document.title = `${label} — EduPlatform`;
+    document.getElementById('topbar-center').textContent =
+      `${label} · ${questions.length} ta savol`;
+
+    // show UI elements
+    document.getElementById('q-title-bar').style.display  = 'flex';
+    document.getElementById('num-grid-bar').style.display = 'flex';
+
+    // build content row
+    document.getElementById('content-row').innerHTML = `
+      <div class="left-panel"  id="left-panel"></div>
+      <div class="right-panel" id="right-panel"></div>
+    `;
+
+    renderNumGrid();
+    showQuestion(0);
+  } catch(e) {
+    showLayoutError('⚠️ ' + (e.message || 'Xatolik yuz berdi'));
+  }
+}
+
+// ── SHOW QUESTION ────────────────────────────────────────────────
+function showQuestion(idx) {
+  currentQ = idx;
+  const q  = questions[idx];
+
+  // title
+  document.getElementById('q-num-badge').textContent  = idx + 1;
+  document.getElementById('q-title-text').textContent = q.questionText;
+
+  // options
+  const panel = document.getElementById('left-panel');
+  panel.innerHTML = (q.options || []).map((opt, oi) => {
+    let cls = 'opt-btn';
+    if (answers[q.id] === opt) cls += ' selected';
+    if (submitted && resultData) {
+      const d = (resultData.details || []).find(d => d.questionId === q.id);
+      if (d) {
+        const isCorrect = (d.correctAnswers || []).some(
+          ca => ca.trim().toLowerCase() === opt.trim().toLowerCase()
+        );
+        const isUser = opt.trim().toLowerCase() === (d.userAnswer || '').trim().toLowerCase();
+        if (isCorrect)          cls += ' correct';
+        else if (isUser && !d.isCorrect) cls += ' wrong';
+      }
+    }
+    return `
+      <button class="${cls}" id="opt-${q.id}-${oi}"
+        onclick="optClick(${q.id},'${escQ(opt)}',${oi})"
+        ${submitted ? 'disabled' : ''}>
+        <span class="opt-letter">${String.fromCharCode(65 + oi)}</span>
+        <span class="opt-text">${opt}</span>
+      </button>`;
+  }).join('');
+
+  // correct-tag if submitted & wrong
+  if (submitted && resultData) {
+    const d = (resultData.details || []).find(d => d.questionId === q.id);
+    if (d && !d.isCorrect) {
+      const tag = document.createElement('div');
+      tag.innerHTML = `<span class="correct-tag">✅ To'g'ri: ${(d.correctAnswers || []).join(', ')}</span>`;
+      panel.appendChild(tag);
+    }
+  }
+
+  // image (always show default if none)
+  const rightPanel = document.getElementById('right-panel');
+  if (q.imageUrl) {
+    rightPanel.innerHTML = `
+      <div class="q-image-wrap">
+        <img src="${q.imageUrl}" alt="savol rasmi"
+          onerror="this.parentElement.outerHTML='<div class=\\'no-image-placeholder\\'><span style=\\'font-size:2.5rem\\'>🖼️</span><span>Rasm yo\\'q</span></div>'">
+      </div>`;
+  } else {
+    rightPanel.innerHTML = `
+      <div class="no-image-placeholder">
+        <span style="font-size:3rem">🖼️</span>
+        <span>Bu savolda rasm yo'q</span>
+      </div>`;
+  }
+
+  renderNumGrid();
+}
+
+// ── OPTION CLICK → overlay ───────────────────────────────────────
+function optClick(qId, optText, optIdx) {
+  if (submitted) return;
+  const letter = String.fromCharCode(65 + optIdx);
+  pendingOpt = { qId, optText, optIdx, letter };
+  document.getElementById('ov-letter').textContent = letter;
+  document.getElementById('ov-text').textContent   = optText;
+  document.getElementById('opt-overlay').classList.add('open');
+}
+
+function closeOverlay() {
+  document.getElementById('opt-overlay').classList.remove('open');
+  pendingOpt = null;
+}
+
+function overlayBgClick(e) {
+  if (e.target === document.getElementById('opt-overlay')) closeOverlay();
+}
+
+function confirmOverlay() {
+  if (!pendingOpt) return;
+  const { qId, optText, optIdx } = pendingOpt;
+  closeOverlay();
+
+  answers[qId] = optText;
+
+  // update button visual
+  const q = questions[currentQ];
+  (q.options || []).forEach((_, oi) => {
+    const b = document.getElementById(`opt-${qId}-${oi}`);
+    if (b) b.classList.remove('selected');
+  });
+  const sel = document.getElementById(`opt-${qId}-${optIdx}`);
+  if (sel) sel.classList.add('selected');
+
+  renderNumGrid();
+}
+
+// ── NUMBER GRID ───────────────────────────────────────────────────
+function renderNumGrid() {
+  const grid    = document.getElementById('num-grid');
+  const counter = document.getElementById('grid-counter');
+  if (!grid) return;
+
+  grid.innerHTML = questions.map((q, i) => {
+    let cls = 'num-btn';
+    if (i === currentQ) cls += ' active';
+    if (answers[q.id] !== undefined) cls += ' answered';
+    if (submitted && resultData) {
+      const d = (resultData.details || []).find(d => d.questionId === q.id);
+      if (d) cls += d.isCorrect ? ' passed' : ' failed';
+    }
+    return `<button class="${cls}" onclick="showQuestion(${i})">${i + 1}</button>`;
+  }).join('');
+
+  const done = Object.keys(answers).length;
+  if (counter) counter.innerHTML = `Javob berildi: <span>${done}</span> / ${questions.length}`;
+}
+
+// ── FINISH ────────────────────────────────────────────────────────
+function finishConfirm() {
+  const unanswered = questions.length - Object.keys(answers).length;
+  if (unanswered > 0) {
+    showToast(`⚠️ Hali ${unanswered} ta savol javobsiz!`, 'warning');
+    return;
+  }
+  submitTest();
+}
+
+async function submitTest() {
+  if (submitted) return;
+  try {
+    const url = testType === 'lesson'
+      ? `/api/course/lessons/${entityId}/test`
+      : `/api/course/sections/${entityId}/final-test`;
+    const result = await Http.post(url, { answers });
+    submitted = true;
+    resultData = result;
+    renderNumGrid();
+    // refresh current question marks
+    showQuestion(currentQ);
+    openResultOverlay(result);
+  } catch(e) {
+    showToast('⚠️ ' + (e.message || 'Xatolik'), 'error');
+  }
+}
+
+// ── RESULT OVERLAY ────────────────────────────────────────────────
+function openResultOverlay(r) {
+  const color = r.passed ? '#22d3a0' : r.scorePercent >= 50 ? '#f5a623' : '#f25c7a';
+  document.getElementById('r-emoji').textContent       = r.passed ? '🎉' : r.scorePercent >= 50 ? '😐' : '😔';
+  document.getElementById('r-score').textContent       = r.scorePercent + '%';
+  document.getElementById('r-score').style.color       = color;
+  document.getElementById('r-msg').textContent         = r.message || '';
+  document.getElementById('r-stats').innerHTML         = `
+    <span style="color:var(--success)">✅ ${r.correctAnswers} to'g'ri</span>
+    <span style="color:var(--danger)">❌ ${r.wrongAnswers} noto'g'ri</span>`;
+  document.getElementById('r-btns').innerHTML = r.passed
+    ? `<button class="r-btn r-btn-primary" onclick="goBack()">🎉 Davom etish</button>`
+    : `<button class="r-btn r-btn-primary" onclick="retryTest()">🔄 Qaytadan</button>
+       <button class="r-btn r-btn-ghost"   onclick="goBack()">← Orqaga</button>`;
+  document.getElementById('result-overlay').classList.add('open');
+}
+
+function goBack()    { location.href = backUrl; }
+
+function retryTest() {
+  document.getElementById('result-overlay').classList.remove('open');
+  document.getElementById('q-title-bar').style.display  = 'none';
+  document.getElementById('num-grid-bar').style.display = 'none';
+  document.getElementById('content-row').innerHTML =
+    `<div style="grid-column:1/-1"><div class="state-center">
+       <div class="spinner-ring"></div><span>Yuklanmoqda...</span>
+     </div></div>`;
+  loadTest();
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escQ(s) {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function showLayoutError(msg) {
+  document.getElementById('content-row').innerHTML =
+    `<div style="grid-column:1/-1"><div class="state-center" style="color:var(--danger)">${msg}</div></div>`;
+}
+
+function showToast(msg, type = 'info') {
+  if (typeof Toast !== 'undefined') {
+    if (type === 'warning') Toast.warning(msg);
+    else if (type === 'error') Toast.error(msg);
+    else Toast.info(msg);
+    return;
+  }
+  const el = document.createElement('div');
+  el.style.cssText =
+    'background:#1a2a4a;border:1px solid rgba(80,140,255,.4);color:#e8eef8;' +
+    'padding:12px 18px;border-radius:8px;font-size:.88rem;max-width:300px;' +
+    'font-family:Exo 2,sans-serif;';
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
